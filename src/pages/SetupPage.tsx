@@ -1,12 +1,16 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useSeason } from '../state/SeasonProvider'
 import {
+  countSeasonContents,
   createGame,
   createSeason,
   createTeam,
   deleteGame,
+  deleteSeasonCascade,
   deleteTeam,
+  renameSeason,
   renameTeam,
+  type SeasonContents,
 } from '../firebase/repo'
 import {
   compareGamesNewestFirst,
@@ -55,8 +59,11 @@ type Run = (fn: () => Promise<unknown>) => Promise<void>
 // ---------------------------------------------------------------------------
 
 function SeasonSection({ onRun }: { onRun: Run }) {
-  const { seasons, seasonId, selectSeason } = useSeason()
+  const { seasons, seasonId, season, selectSeason } = useSeason()
   const [name, setName] = useState('')
+  const [renaming, setRenaming] = useState(false)
+  const [renameText, setRenameText] = useState('')
+  const [deleting, setDeleting] = useState(false)
 
   async function submit(e: FormEvent) {
     e.preventDefault()
@@ -69,6 +76,15 @@ function SeasonSection({ onRun }: { onRun: Run }) {
     })
   }
 
+  async function saveRename() {
+    const trimmed = renameText.trim()
+    if (!trimmed || !seasonId) return
+    await onRun(async () => {
+      await renameSeason(seasonId, trimmed)
+      setRenaming(false)
+    })
+  }
+
   return (
     <Panel title="球季">
       <div className="flex flex-wrap items-end gap-6">
@@ -78,6 +94,17 @@ function SeasonSection({ onRun }: { onRun: Run }) {
           </label>
           {seasons.length === 0 ? (
             <p className="py-2 text-sm text-slate-500">還沒有球季</p>
+          ) : renaming ? (
+            <input
+              autoFocus
+              className="field"
+              value={renameText}
+              onChange={(e) => setRenameText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void saveRename()
+                if (e.key === 'Escape') setRenaming(false)
+              }}
+            />
           ) : (
             <select
               id="season-select"
@@ -93,6 +120,45 @@ function SeasonSection({ onRun }: { onRun: Run }) {
             </select>
           )}
         </div>
+
+        {season && (
+          <div className="flex gap-2">
+            {renaming ? (
+              <>
+                <button type="button" className="btn-primary" onClick={() => void saveRename()}>
+                  儲存
+                </button>
+                <button type="button" className="btn-ghost" onClick={() => setRenaming(false)}>
+                  取消
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  onClick={() => {
+                    setRenameText(season.name)
+                    setRenaming(true)
+                    setDeleting(false)
+                  }}
+                >
+                  改名
+                </button>
+                <button
+                  type="button"
+                  className="btn-danger"
+                  onClick={() => {
+                    setDeleting(true)
+                    setRenaming(false)
+                  }}
+                >
+                  刪除
+                </button>
+              </>
+            )}
+          </div>
+        )}
 
         <form onSubmit={submit} className="flex items-end gap-2">
           <div className="min-w-[180px]">
@@ -112,8 +178,134 @@ function SeasonSection({ onRun }: { onRun: Run }) {
           </button>
         </form>
       </div>
+
+      {deleting && season && (
+        <DeleteSeasonPanel season={season} onRun={onRun} onClose={() => setDeleting(false)} />
+      )}
     </Panel>
   )
+}
+
+/**
+ * 刪除整季：連同隊伍、球員、比賽、所有紀錄一起清掉，沒得復原。
+ * 所以有資料時要求打出球季名稱才放行——只按一個確認太容易手滑。
+ */
+function DeleteSeasonPanel({
+  season,
+  onRun,
+  onClose,
+}: {
+  season: { id: string; name: string }
+  onRun: Run
+  onClose: () => void
+}) {
+  const [contents, setContents] = useState<SeasonContents | null>(null)
+  const [countError, setCountError] = useState<string | null>(null)
+  const [typed, setTyped] = useState('')
+  const [progress, setProgress] = useState<string | null>(null)
+  const [running, setRunning] = useState(false)
+
+  useEffect(() => {
+    let alive = true
+    setContents(null)
+    setCountError(null)
+    countSeasonContents(season.id)
+      .then((c) => {
+        if (alive) setContents(c)
+      })
+      .catch((e: Error) => {
+        // 清點失敗（離線或權限問題）不能卡在「清點中」，
+        // 但也不能假設這一季是空的——當成有資料處理，一律要求打出名稱。
+        if (alive) setCountError(e.message)
+      })
+    return () => {
+      alive = false
+    }
+  }, [season.id])
+
+  const isEmpty = contents !== null && contents.total === 0
+  const nameConfirmed = typed.trim() === season.name
+  /**
+   * 空的球季按一下就能刪；有資料的要打出名稱。
+   * 清點失敗時也要求打名稱——不知道裡面有什麼，就不能當它是空的。
+   */
+  const needsNameConfirm = countError !== null || (contents !== null && !isEmpty)
+  const canDelete = needsNameConfirm ? nameConfirmed : isEmpty
+
+  async function run() {
+    if (!canDelete || running) return
+    setRunning(true)
+    await onRun(async () => {
+      await deleteSeasonCascade(season.id, (p) => setProgress(`${p.done}/${p.total}`))
+      onClose()
+    })
+    setRunning(false)
+    setProgress(null)
+  }
+
+  return (
+    <div className="mt-4 animate-pop-in rounded-lg border border-red-500/40 bg-red-500/5 p-4">
+      <h3 className="text-sm font-bold text-red-300">刪除球季「{season.name}」</h3>
+
+      {countError !== null ? (
+        <p className="mt-2 text-sm text-red-300">
+          清點不到這一季有多少資料（{countError}）。可能是離線或權限問題。
+          還是可以刪除，但看不到會刪掉什麼，請先確認網路正常再決定。
+        </p>
+      ) : contents === null ? (
+        <p className="mt-2 text-sm text-slate-400">正在清點這一季的資料…</p>
+      ) : isEmpty ? (
+        <p className="mt-2 text-sm text-slate-300">這一季是空的，可以直接刪除。</p>
+      ) : (
+        <p className="mt-2 text-sm text-slate-300">
+          會一併刪除 <Count n={contents.teams} /> 支隊伍、
+          <Count n={contents.players} /> 位球員、
+          <Count n={contents.games} /> 場比賽、
+          <Count n={contents.pitches + contents.battedBalls} /> 筆紀錄。
+          <span className="font-semibold">這個動作沒有辦法復原。</span>
+        </p>
+      )}
+
+      {needsNameConfirm && (
+        <>
+          <p className="mt-2 text-xs text-amber-300">
+            💡 刪除前建議先到「資料管理」匯出一份 JSON 備份，之後還能匯回來。
+          </p>
+          <div className="mt-3">
+            <label className="label" htmlFor="confirm-season-name">
+              確認請輸入球季名稱：{season.name}
+            </label>
+            <input
+              id="confirm-season-name"
+              className="field max-w-xs"
+              value={typed}
+              onChange={(e) => setTyped(e.target.value)}
+              placeholder={season.name}
+              autoComplete="off"
+            />
+          </div>
+        </>
+      )}
+
+      <div className="mt-4 flex gap-2">
+        <button
+          type="button"
+          className="btn-danger"
+          onClick={() => void run()}
+          disabled={!canDelete || running}
+        >
+          {running ? `刪除中 ${progress ?? ''}` : '確定刪除'}
+        </button>
+        <button type="button" className="btn-ghost" onClick={onClose} disabled={running}>
+          取消
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function Count({ n }: { n: number }) {
+  return <span className="font-semibold text-red-300">{n}</span>
 }
 
 // ---------------------------------------------------------------------------

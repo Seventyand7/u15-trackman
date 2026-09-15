@@ -102,6 +102,76 @@ export async function createSeason(name: string): Promise<Id> {
   return ref.id
 }
 
+export async function renameSeason(id: Id, name: string): Promise<void> {
+  await updateDoc(doc(db(), COLLECTIONS.seasons, id), { name: name.trim() })
+}
+
+/** 刪除球季前先算出會連帶刪掉多少東西，給確認畫面顯示。 */
+export interface SeasonContents {
+  teams: number
+  players: number
+  games: number
+  pitches: number
+  battedBalls: number
+  total: number
+}
+
+export async function countSeasonContents(seasonId: Id): Promise<SeasonContents> {
+  const [teams, players, games, pitches, battedBalls] = await Promise.all([
+    fetchAllBySeason<{ id: Id }>(COLLECTIONS.teams, seasonId),
+    fetchAllBySeason<{ id: Id }>(COLLECTIONS.players, seasonId),
+    fetchAllBySeason<{ id: Id }>(COLLECTIONS.games, seasonId),
+    fetchAllBySeason<{ id: Id }>(COLLECTIONS.pitches, seasonId),
+    fetchAllBySeason<{ id: Id }>(COLLECTIONS.battedBalls, seasonId),
+  ])
+  return {
+    teams: teams.length,
+    players: players.length,
+    games: games.length,
+    pitches: pitches.length,
+    battedBalls: battedBalls.length,
+    total:
+      teams.length + players.length + games.length + pitches.length + battedBalls.length,
+  }
+}
+
+/**
+ * 刪除球季，連同該季的隊伍、球員、比賽、投球、擊球全部清掉。
+ *
+ * 事件先刪、球季最後刪：萬一中途失敗，球季還在，可以重跑一次；
+ * 反過來的話會留下一堆連不回任何球季的孤兒資料，比較難清。
+ *
+ * 這個動作沒得復原，呼叫端一定要先確認過。
+ */
+export async function deleteSeasonCascade(
+  seasonId: Id,
+  onProgress?: (p: ImportProgress) => void,
+): Promise<void> {
+  const order = [
+    COLLECTIONS.pitches,
+    COLLECTIONS.battedBalls,
+    COLLECTIONS.games,
+    COLLECTIONS.players,
+    COLLECTIONS.teams,
+  ]
+
+  const refs: DocumentReference[] = []
+  for (const name of order) {
+    const rows = await fetchAllBySeason<{ id: Id }>(name, seasonId)
+    for (const row of rows) refs.push(doc(db(), name, row.id))
+  }
+
+  for (let i = 0; i < refs.length; i += BATCH_LIMIT) {
+    const batch = writeBatch(db())
+    const chunk = refs.slice(i, i + BATCH_LIMIT)
+    for (const ref of chunk) batch.delete(ref)
+    await batch.commit()
+    onProgress?.({ done: Math.min(i + chunk.length, refs.length), total: refs.length })
+  }
+
+  await deleteDoc(doc(db(), COLLECTIONS.seasons, seasonId))
+}
+
 export async function createTeam(seasonId: Id, name: string): Promise<Id> {
   const ref = await addDoc(col(COLLECTIONS.teams), { seasonId, name: name.trim() })
   return ref.id

@@ -26,6 +26,20 @@ import type { BattedBall, BattedField, Pitch, PitchField, Player, Team } from '.
 
 export const CARD_WIDTH = 490
 
+/**
+ * 最上方兩列（日期／球季名稱、場次／隊名）固定同高。
+ * 用固定高度加置中，而不是靠內距去湊——字級不一樣時內距湊不出一樣的高度。
+ */
+const BAND_HEIGHT = 34
+
+const bandStyle: CSSProperties = {
+  height: BAND_HEIGHT,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  textAlign: 'center',
+}
+
 export const CARD = {
   white: '#FFFFFF',
   header: '#2B3450',
@@ -104,14 +118,16 @@ export function playerOnlyLabel(entry: RankEntry, lookups: CardLookups): string 
 
 // ---------------------------------------------------------------------------
 
-/** 最上方置中的那一行（單場圖卡是日期，季排名圖卡是球季名稱）。 */
+/**
+ * 最上方置中的那一行（單場圖卡是日期，季排名圖卡是球季名稱）。
+ * 字級比下面的場次列小一點——日期不是這張圖卡的重點。
+ */
 export function CardTitle({ children }: { children: ReactNode }) {
   return (
     <div
       style={{
-        padding: '12px 0 10px',
-        textAlign: 'center',
-        fontSize: 17,
+        ...bandStyle,
+        fontSize: 14,
         fontWeight: 700,
         letterSpacing: '0.05em',
       }}
@@ -126,10 +142,10 @@ export function HeaderBar({ children }: { children: ReactNode }) {
   return (
     <div
       style={{
+        ...bandStyle,
         background: CARD.header,
         color: CARD.white,
-        padding: '7px 10px',
-        textAlign: 'center',
+        padding: '0 10px',
         fontSize: 15,
         fontWeight: 700,
         letterSpacing: '0.03em',
