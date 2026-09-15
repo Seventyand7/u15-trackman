@@ -116,11 +116,14 @@ export function toggleBattedField(config: CardConfig, field: BattedField): CardC
 }
 
 /**
- * 欄位排版：3 欄以內排一列；4–5 欄排兩列（第一列 3 欄、第二列其餘）。
- * 每一列裡的格寬平均分配。
+ * 欄位排版，每一列裡的格寬平均分配：
+ *   1–3 欄 → 一列
+ *   4 欄   → 兩列各 2 欄（不是 3+1——單獨一格吊在第二列，視覺重量會很怪）
+ *   5 欄   → 第一列 3 欄、第二列 2 欄
  */
 export function splitIntoRows<T>(fields: readonly T[]): T[][] {
   if (fields.length === 0) return []
   if (fields.length <= 3) return [[...fields]]
+  if (fields.length === 4) return [fields.slice(0, 2), fields.slice(2)]
   return [fields.slice(0, 3), fields.slice(3)]
 }

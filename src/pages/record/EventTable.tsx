@@ -21,7 +21,7 @@ import {
   formatSpin,
   formatText,
 } from '../../lib/format'
-import { toNumber, toText } from '../../lib/validation'
+import { formatVideoTimeInput, toNumber, toText } from '../../lib/validation'
 import type { BattedBall, Game, Id, Pitch } from '../../types/models'
 import { Empty, Panel } from '../../components/ui'
 
@@ -231,7 +231,8 @@ function PitchRow({ pitch }: { pitch: Pitch }) {
     }
   }
 
-  const set = (k: string) => (v: string) => setDraft((d) => ({ ...d, [k]: v }))
+  const set = (k: string) => (v: string) =>
+    setDraft((d) => ({ ...d, [k]: k === 'videoTime' ? formatVideoTimeInput(v) : v }))
 
   if (editing) {
     return (
@@ -320,7 +321,8 @@ function BattedRow({ ball }: { ball: BattedBall }) {
     }
   }
 
-  const set = (k: string) => (v: string) => setDraft((d) => ({ ...d, [k]: v }))
+  const set = (k: string) => (v: string) =>
+    setDraft((d) => ({ ...d, [k]: k === 'videoTime' ? formatVideoTimeInput(v) : v }))
 
   if (editing) {
     return (

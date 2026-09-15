@@ -71,6 +71,28 @@ function clean(v: number | null): number | null {
 /** 轉軸格式 H:MM，H 為 1–12，MM 為 00–59。 */
 export const AXIS_PATTERN = /^([1-9]|1[0-2]):[0-5][0-9]$/
 
+/**
+ * 時間碼輸入：只打數字，冒號自動長出來。
+ *
+ * 從右邊開始每兩位切一段（秒、分、時），所以照著 YouTube 上看到的數字打就好：
+ *   1      → 1
+ *   12     → 12
+ *   123    → 1:23
+ *   1234   → 12:34
+ *   12345  → 1:23:45
+ *   123456 → 12:34:56
+ *
+ * 刻意不用「由左往右每兩位補冒號」：那樣打 12345 會變成 12:34:5，
+ * 除非每次都把小時補成兩位（01:23:45），但我們的格式是 1:23:45。
+ * 從右邊切就同時吃得下 mm:ss 與 h:mm:ss，不用先想這支影片有沒有超過一小時。
+ */
+export function formatVideoTimeInput(raw: string): string {
+  const digits = raw.replace(/\D/g, '').slice(0, 6)
+  if (digits.length <= 2) return digits
+  if (digits.length <= 4) return `${digits.slice(0, -2)}:${digits.slice(-2)}`
+  return `${digits.slice(0, -4)}:${digits.slice(-4, -2)}:${digits.slice(-2)}`
+}
+
 // ---------------------------------------------------------------------------
 // 警告規則
 

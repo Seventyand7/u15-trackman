@@ -21,6 +21,7 @@ import {
   buildPitch,
   findDuplicateBattedBall,
   findDuplicatePitch,
+  formatVideoTimeInput,
   pitchHasData,
   warnBatted,
   warnPitch,
@@ -54,14 +55,14 @@ const PITCH_FIELDS: FieldSpec[] = [
   { key: 'axis', label: '轉軸', hint: 'H:MM', width: 'w-24' },
   { key: 'hBreak', label: '水平位移', width: 'w-28' },
   { key: 'vBreak', label: '垂直位移', width: 'w-28' },
-  { key: 'videoTime', label: '時間碼', hint: '時:分:秒', width: 'w-28' },
+  { key: 'videoTime', label: '時間碼', hint: '只打數字', width: 'w-28' },
 ]
 
 const BATTED_FIELDS: FieldSpec[] = [
   { key: 'exitVelo', label: '擊球初速', hint: 'km/h', width: 'w-28' },
   { key: 'launchAngle', label: '仰角', hint: '°', width: 'w-24' },
   { key: 'distance', label: '擊球距離', hint: 'm', width: 'w-28' },
-  { key: 'videoTime', label: '時間碼', hint: '時:分:秒', width: 'w-28' },
+  { key: 'videoTime', label: '時間碼', hint: '只打數字', width: 'w-28' },
 ]
 
 type Values = Record<string, string>
@@ -369,7 +370,16 @@ export function EventForm({
                     warning ? 'border-amber-500/60 bg-amber-500/5' : ''
                   }`}
                   value={values[f.key] ?? ''}
-                  onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
+                  onChange={(e) =>
+                    setValues((v) => ({
+                      ...v,
+                      // 時間碼只打數字，冒號自己長出來
+                      [f.key]:
+                        f.key === 'videoTime'
+                          ? formatVideoTimeInput(e.target.value)
+                          : e.target.value,
+                    }))
+                  }
                   placeholder={EMPTY_HINT}
                   autoComplete="off"
                 />

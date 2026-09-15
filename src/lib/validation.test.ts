@@ -4,6 +4,7 @@ import {
   EMPTY_PITCH_INPUT,
   battedHasData,
   buildBattedBall,
+  formatVideoTimeInput,
   buildPitch,
   findDuplicateBattedBall,
   findDuplicatePitch,
@@ -245,5 +246,47 @@ describe('重複偵測', () => {
     const different = buildBattedBall(b({ exitVelo: '120', distance: '81' }), refs)
     expect(findDuplicateBattedBall(balls, same)?.id).toBe('old')
     expect(findDuplicateBattedBall(balls, different)).toBeNull()
+  })
+})
+
+describe('formatVideoTimeInput — 時間碼只打數字，冒號自動長出來', () => {
+  it('從右邊每兩位切一段', () => {
+    expect(formatVideoTimeInput('1')).toBe('1')
+    expect(formatVideoTimeInput('12')).toBe('12')
+    expect(formatVideoTimeInput('123')).toBe('1:23')
+    expect(formatVideoTimeInput('1234')).toBe('12:34')
+    expect(formatVideoTimeInput('12345')).toBe('1:23:45')
+    expect(formatVideoTimeInput('123456')).toBe('12:34:56')
+  })
+
+  it('已經有冒號的輸入不會被重複加工（貼上整段時間碼）', () => {
+    expect(formatVideoTimeInput('1:23:45')).toBe('1:23:45')
+    expect(formatVideoTimeInput('23:45')).toBe('23:45')
+    expect(formatVideoTimeInput('01:23:45')).toBe('01:23:45')
+  })
+
+  it('自己手動打冒號也不會變成兩個', () => {
+    expect(formatVideoTimeInput('1:')).toBe('1')
+    expect(formatVideoTimeInput('1:2')).toBe('12')
+    expect(formatVideoTimeInput('1:23')).toBe('1:23')
+  })
+
+  it('超過六位數就不再吃（最多 hh:mm:ss）', () => {
+    expect(formatVideoTimeInput('1234567')).toBe('12:34:56')
+  })
+
+  it('非數字一律忽略', () => {
+    expect(formatVideoTimeInput('abc')).toBe('')
+    expect(formatVideoTimeInput('1a2b3')).toBe('1:23')
+  })
+
+  it('清空就是空的', () => {
+    expect(formatVideoTimeInput('')).toBe('')
+  })
+
+  it('刪掉一個字元等於刪掉一位數字，會重新分段', () => {
+    // '1:23:45' 按退格 → '1:23:4' → 剩 1234 → '12:34'
+    expect(formatVideoTimeInput('1:23:4')).toBe('12:34')
+    expect(formatVideoTimeInput('12:3')).toBe('1:23')
   })
 })

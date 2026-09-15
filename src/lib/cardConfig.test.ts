@@ -121,8 +121,18 @@ describe('splitIntoRows — 欄位排版', () => {
     expect(splitIntoRows(['a', 'b', 'c'])).toEqual([['a', 'b', 'c']])
   })
 
-  it('4 欄排兩列：第一列 3 欄、第二列 1 欄', () => {
-    expect(splitIntoRows(['a', 'b', 'c', 'd'])).toEqual([['a', 'b', 'c'], ['d']])
+  it('4 欄排兩列各 2 欄，不留單獨一格吊在第二列', () => {
+    expect(splitIntoRows(['a', 'b', 'c', 'd'])).toEqual([
+      ['a', 'b'],
+      ['c', 'd'],
+    ])
+  })
+
+  it('任何情況下都不會有只裝一格的第二列', () => {
+    for (let n = 1; n <= 5; n++) {
+      const rows = splitIntoRows(Array.from({ length: n }, (_, i) => i))
+      if (rows.length > 1) expect(rows[1]!.length).toBeGreaterThan(1)
+    }
   })
 
   it('5 欄排兩列：第一列 3 欄、第二列 2 欄', () => {
