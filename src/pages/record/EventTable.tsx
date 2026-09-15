@@ -21,7 +21,8 @@ import {
   formatSpin,
   formatText,
 } from '../../lib/format'
-import { formatVideoTimeInput, toNumber, toText } from '../../lib/validation'
+import { toNumber, toText } from '../../lib/validation'
+import { VideoTimeInput } from '../../components/VideoTimeInput'
 import type { BattedBall, Game, Id, Pitch } from '../../types/models'
 import { Empty, Panel } from '../../components/ui'
 
@@ -164,21 +165,35 @@ function EditCell({
   onChange,
   onKeyDown,
   autoFocus,
+  videoTime,
 }: {
   value: string
   onChange: (v: string) => void
   onKeyDown: (e: React.KeyboardEvent) => void
   autoFocus?: boolean
+  /** 時間碼欄要自動補冒號，而且游標要釘在最後（見 VideoTimeInput） */
+  videoTime?: boolean
 }) {
+  const cls = 'field w-24 !py-1 font-mono text-xs'
   return (
     <td className="py-1.5 pr-3">
-      <input
-        autoFocus={autoFocus}
-        className="field w-24 !py-1 font-mono text-xs"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={onKeyDown}
-      />
+      {videoTime ? (
+        <VideoTimeInput
+          autoFocus={autoFocus}
+          className={cls}
+          value={value}
+          onChange={onChange}
+          onKeyDown={onKeyDown}
+        />
+      ) : (
+        <input
+          autoFocus={autoFocus}
+          className={cls}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={onKeyDown}
+        />
+      )}
     </td>
   )
 }
@@ -231,8 +246,7 @@ function PitchRow({ pitch }: { pitch: Pitch }) {
     }
   }
 
-  const set = (k: string) => (v: string) =>
-    setDraft((d) => ({ ...d, [k]: k === 'videoTime' ? formatVideoTimeInput(v) : v }))
+  const set = (k: string) => (v: string) => setDraft((d) => ({ ...d, [k]: v }))
 
   if (editing) {
     return (
@@ -243,7 +257,12 @@ function PitchRow({ pitch }: { pitch: Pitch }) {
         <EditCell value={draft.axis ?? ''} onChange={set('axis')} onKeyDown={onKeyDown} />
         <EditCell value={draft.hBreak ?? ''} onChange={set('hBreak')} onKeyDown={onKeyDown} />
         <EditCell value={draft.vBreak ?? ''} onChange={set('vBreak')} onKeyDown={onKeyDown} />
-        <EditCell value={draft.videoTime ?? ''} onChange={set('videoTime')} onKeyDown={onKeyDown} />
+        <EditCell
+          videoTime
+          value={draft.videoTime ?? ''}
+          onChange={set('videoTime')}
+          onKeyDown={onKeyDown}
+        />
         <RowActions
           editing
           onEdit={startEdit}
@@ -321,8 +340,7 @@ function BattedRow({ ball }: { ball: BattedBall }) {
     }
   }
 
-  const set = (k: string) => (v: string) =>
-    setDraft((d) => ({ ...d, [k]: k === 'videoTime' ? formatVideoTimeInput(v) : v }))
+  const set = (k: string) => (v: string) => setDraft((d) => ({ ...d, [k]: v }))
 
   if (editing) {
     return (
@@ -340,7 +358,12 @@ function BattedRow({ ball }: { ball: BattedBall }) {
           onKeyDown={onKeyDown}
         />
         <EditCell value={draft.distance ?? ''} onChange={set('distance')} onKeyDown={onKeyDown} />
-        <EditCell value={draft.videoTime ?? ''} onChange={set('videoTime')} onKeyDown={onKeyDown} />
+        <EditCell
+          videoTime
+          value={draft.videoTime ?? ''}
+          onChange={set('videoTime')}
+          onKeyDown={onKeyDown}
+        />
         <RowActions
           editing
           onEdit={startEdit}

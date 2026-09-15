@@ -21,7 +21,6 @@ import {
   buildPitch,
   findDuplicateBattedBall,
   findDuplicatePitch,
-  formatVideoTimeInput,
   pitchHasData,
   warnBatted,
   warnPitch,
@@ -33,6 +32,7 @@ import type { EventKind } from '../../lib/ranking'
 import type { Game, Id, Player, Team } from '../../types/models'
 import { Kbd } from '../../components/ui'
 import { PlayerPicker, SameNameDecision, resolvePlayer } from './PlayerPicker'
+import { VideoTimeInput } from '../../components/VideoTimeInput'
 
 interface FieldSpec {
   key: string
@@ -360,32 +360,34 @@ export function EventForm({
         <div className="flex flex-wrap gap-3">
           {fields.map((f, i) => {
             const warning = warnings.find((w) => w.field === f.key)
+            const cls = `field ${f.width} font-mono placeholder:text-slate-700 ${
+              warning ? 'border-amber-500/60 bg-amber-500/5' : ''
+            }`
             return (
               <div key={f.key}>
                 <label className="label" htmlFor={`${kind}-${f.key}`}>
                   {f.label}
                   {f.hint && <span className="ml-1 normal-case text-slate-600">{f.hint}</span>}
                 </label>
-                <input
-                  ref={i === 0 ? firstValueRef : undefined}
-                  id={`${kind}-${f.key}`}
-                  className={`field ${f.width} font-mono placeholder:text-slate-700 ${
-                    warning ? 'border-amber-500/60 bg-amber-500/5' : ''
-                  }`}
-                  value={values[f.key] ?? ''}
-                  onChange={(e) =>
-                    setValues((v) => ({
-                      ...v,
-                      // 時間碼只打數字，冒號自己長出來
-                      [f.key]:
-                        f.key === 'videoTime'
-                          ? formatVideoTimeInput(e.target.value)
-                          : e.target.value,
-                    }))
-                  }
-                  placeholder={EMPTY_HINT}
-                  autoComplete="off"
-                />
+                {f.key === 'videoTime' ? (
+                  <VideoTimeInput
+                    id={`${kind}-${f.key}`}
+                    className={cls}
+                    value={values[f.key] ?? ''}
+                    onChange={(next) => setValues((v) => ({ ...v, [f.key]: next }))}
+                    placeholder={EMPTY_HINT}
+                  />
+                ) : (
+                  <input
+                    ref={i === 0 ? firstValueRef : undefined}
+                    id={`${kind}-${f.key}`}
+                    className={cls}
+                    value={values[f.key] ?? ''}
+                    onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
+                    placeholder={EMPTY_HINT}
+                    autoComplete="off"
+                  />
+                )}
               </div>
             )
           })}
