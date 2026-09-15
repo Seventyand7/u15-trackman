@@ -1,3 +1,44 @@
+/* 自託管 Noto Sans TC。
+   只要圖卡真正用到的拉丁與繁中子集、400/700 兩個字重，共四個檔案。
+
+   這裡不用 @fontsource 提供的 css，因為那些檔案的 src 同時列了 woff2 與 woff，
+   會讓 build 多打包 2.8MB 永遠不會被下載的 .woff（woff2 排在前面，現代瀏覽器一定選它）。
+   直接指名 woff2，也確保頁面顯示與 lib/fontEmbed.ts 截圖時內嵌的是同樣四個檔案。 */
+@font-face {
+  font-family: 'Noto Sans TC';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('@fontsource/noto-sans-tc/files/noto-sans-tc-latin-400-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+2000-206F, U+2070-209F,
+    U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Noto Sans TC';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('@fontsource/noto-sans-tc/files/noto-sans-tc-latin-700-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+2000-206F, U+2070-209F,
+    U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Noto Sans TC';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('@fontsource/noto-sans-tc/files/noto-sans-tc-chinese-traditional-400-normal.woff2')
+    format('woff2');
+}
+@font-face {
+  font-family: 'Noto Sans TC';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('@fontsource/noto-sans-tc/files/noto-sans-tc-chinese-traditional-700-normal.woff2')
+    format('woff2');
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

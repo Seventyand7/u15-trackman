@@ -6,6 +6,7 @@ import { LoginPage } from './components/LoginPage'
 import { SetupNeededPage } from './components/SetupNeededPage'
 import { isFirebaseConfigured } from './firebase/config'
 import { SeasonProvider } from './state/SeasonProvider'
+import { CardConfigProvider } from './state/CardConfigProvider'
 import CardsPage from './pages/CardsPage'
 import DataPage from './pages/DataPage'
 import RankingPage from './pages/RankingPage'
@@ -30,7 +31,8 @@ function Gate() {
   // 登入且在白名單內：GitHub Pages 不能處理 SPA 的 history 路由，所以用 HashRouter。
   return (
     <SeasonProvider>
-      <HashRouter>
+      <CardConfigProvider>
+        <HashRouter>
         <Routes>
           <Route element={<AppShell />}>
             <Route path="/record" element={<RecordPage />} />
@@ -40,8 +42,9 @@ function Gate() {
             <Route path="/data" element={<DataPage />} />
             <Route path="*" element={<Navigate to="/record" replace />} />
           </Route>
-        </Routes>
-      </HashRouter>
+          </Routes>
+        </HashRouter>
+      </CardConfigProvider>
     </SeasonProvider>
   )
 }

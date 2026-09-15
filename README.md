@@ -13,7 +13,7 @@
 | 1 | 專案骨架、Firebase 連線、Google 登入與白名單、Security Rules、GitHub Actions 部署 | ✅ 完成 |
 | 2 | `ranking.ts`、球員合併邏輯與完整單元測試 | ✅ 完成 |
 | 3 | 設定頁、記錄頁 | ✅ 完成 |
-| 4 | 圖卡輸出頁 ← 到這裡就能開始每週使用 | 待做 |
+| 4 | 圖卡輸出頁 ← 到這裡就能開始每週使用 | ✅ 完成 |
 | 5 | 季排名頁、CSV | 待做 |
 | 6 | 資料管理頁 | 待做 |
 
@@ -151,6 +151,23 @@ allow read, write: if request.auth != null
 
 ---
 
+## 圖卡字型
+
+圖卡輸出用 html-to-image，它是把節點包成 SVG 的 foreignObject 再讓瀏覽器畫成圖。
+那個 SVG 是獨立文件，**拿不到頁面已經載入的 webfont**——字型必須以 data URI
+內嵌在 SVG 的 CSS 裡，否則中文會變成各台電腦自己的系統字型，交出去的圖卡就不一致。
+
+兩件事值得知道：
+
+- **只用四個字型檔。** `@fontsource/noto-sans-tc` 會拆成 954 個子集檔，
+  html-to-image 內建的字型內嵌會全部抓一遍，慢到不能用。
+  `src/lib/fontEmbed.ts` 只挑繁中與拉丁 × 400/700 這四個檔案自己組 CSS，
+  結果會快取，第一張圖卡約 0.3 秒，之後每張約 0.15 秒。
+- **不用 html-to-image 的 `toPng`／`toCanvas`。** 它內部在 `requestAnimationFrame`
+  裡才 resolve，分頁切到背景時 rAF 會停掉——按下「全部下載」後跑去看 FB，
+  匯出就會卡住直到切回來。`src/lib/exportImage.ts` 改用 `toSvg` 再自己轉 canvas，
+  只需要 `decode()`，跟分頁在不在前景無關。
+
 ## 專案結構
 
 ```
@@ -166,7 +183,10 @@ src/
   auth/AuthProvider.tsx        登入狀態機：loading / signed-out / allowed / denied
   components/                  AppShell、登入頁、無權限頁、設定引導頁
   pages/                       五個分頁
-  lib/                         純邏輯：ranking / players / format / validation
+  lib/                         純邏輯：ranking / players / format / validation / cardConfig
+  lib/fontEmbed.ts             截圖用的字型內嵌（見下方「圖卡字型」）
+  lib/exportImage.ts           PNG／剪貼簿／ZIP
+  components/card/             白底圖卡版型與欄位勾選面板
   state/SeasonProvider.tsx     目前球季的全部資料（訂閱 Firestore，排名在前端算）
   firebase/repo.ts             唯一直接碰 Firestore 的地方
   types/                       資料模型型別

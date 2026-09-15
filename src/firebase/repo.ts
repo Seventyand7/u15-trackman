@@ -23,6 +23,7 @@ import {
   getDocs,
   onSnapshot,
   query,
+  setDoc,
   updateDoc,
   where,
   writeBatch,
@@ -40,6 +41,7 @@ import type {
   Team,
 } from '../types/models'
 import type { NewBattedBall, NewPitch } from '../lib/validation'
+import type { CardConfig } from '../types/models'
 
 export const COLLECTIONS = {
   seasons: 'seasons',
@@ -226,6 +228,32 @@ export async function applyMerge(plan: MergePlan): Promise<void> {
   })
   finalBatch.delete(doc(db(), COLLECTIONS.players, plan.remove.id))
   await finalBatch.commit()
+}
+
+// ---------------------------------------------------------------------------
+// 圖卡欄位勾選設定
+//
+// 不分球季，單場圖卡與季排名圖卡共用同一份，所以是固定的一個文件。
+
+const CARD_CONFIG_PATH = ['settings', 'cardConfig'] as const
+
+export function subscribeCardConfig(
+  onData: (raw: Partial<CardConfig> | null) => void,
+  onError: (e: Error) => void,
+): Unsubscribe {
+  return onSnapshot(
+    doc(db(), CARD_CONFIG_PATH[0], CARD_CONFIG_PATH[1]),
+    (snap) => onData(snap.exists() ? (snap.data() as Partial<CardConfig>) : null),
+    onError,
+  )
+}
+
+export async function saveCardConfig(config: CardConfig): Promise<void> {
+  await setDoc(doc(db(), CARD_CONFIG_PATH[0], CARD_CONFIG_PATH[1]), {
+    pitchFields: config.pitchFields,
+    battedFields: config.battedFields,
+    updatedAt: Date.now(),
+  })
 }
 
 // ---------------------------------------------------------------------------
