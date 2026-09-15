@@ -239,6 +239,58 @@ export function gameBests(pool: EventPool, gameId: Id): Record<RankCategory, Ran
   return byCategory((meta) => entriesFor(pool, meta.key, { gameId })[0] ?? null)
 }
 
+/**
+ * 某一隊在這場比賽的各項目最佳。
+ *
+ * 記錄的時候需要分隊看：強隊打弱隊時，合併的「本場最佳」會整欄被強隊佔滿，
+ * 弱隊現在最好的是多少完全看不到。
+ */
+export function teamGameBests(
+  pool: EventPool,
+  gameId: Id,
+  teamId: Id,
+): Record<RankCategory, RankEntry | null> {
+  return byCategory((meta) => entriesFor(pool, meta.key, { gameId, teamId })[0] ?? null)
+}
+
+// ---------------------------------------------------------------------------
+// 「這一球要贏過多少才有意義」
+
+/**
+ * 這位球員要超過多少，這一筆才會動到該隊的季排名。
+ * null 代表「怎樣都會進榜」——名單還沒滿而且他還沒有任何紀錄。
+ *
+ * 為什麼是這個數字：季排名每位球員只留個人最佳，所以
+ *   已經在前 N 名的人 → 要贏過自己原本那筆，名次才會動
+ *   還沒進前 N 名的人 → 要贏過第 N 名才擠得進去
+ * 而在榜上的人他的個人最佳一定 >= 第 N 名，所以兩種情況合起來就是取大的那個。
+ */
+export function seasonTargetForPlayer(
+  pool: EventPool,
+  teamId: Id,
+  playerId: Id,
+  category: RankCategory,
+  limit = 3,
+): number | null {
+  const best = keepPersonalBest(entriesFor(pool, category, { teamId }))
+  const own = best.find((e) => e.playerId === playerId)
+  const cutoff = best.length >= limit ? best[limit - 1] : undefined
+
+  if (!own && !cutoff) return null
+  if (!own) return cutoff!.primary
+  if (!cutoff) return own.primary
+  return Math.max(own.primary, cutoff.primary)
+}
+
+/** 這一筆要超過多少才會成為本場該項目的最佳（兩隊合併）。null 代表本場還沒有資料。 */
+export function gameTarget(
+  pool: EventPool,
+  gameId: Id,
+  category: RankCategory,
+): number | null {
+  return entriesFor(pool, category, { gameId })[0]?.primary ?? null
+}
+
 // ---------------------------------------------------------------------------
 // 各隊季排名
 

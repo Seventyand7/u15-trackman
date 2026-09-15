@@ -33,6 +33,7 @@ import type { Game, Id, Player, Team } from '../../types/models'
 import { Kbd } from '../../components/ui'
 import { PlayerPicker, SameNameDecision, resolvePlayer } from './PlayerPicker'
 import { VideoTimeInput } from '../../components/VideoTimeInput'
+import { PlayerTargets } from './PlayerTargets'
 
 interface FieldSpec {
   key: string
@@ -355,6 +356,11 @@ export function EventForm({
           onAdvance={() => firstValueRef.current?.focus()}
           onRequestMerge={teamId ? (p) => onRequestMerge(p, teamId) : undefined}
         />
+
+        {/* 選到球員就顯示這球要贏過多少，不用等輸入數值 */}
+        {resolved && teamId && (
+          <PlayerTargets kind={kind} gameId={game.id} teamId={teamId} playerId={resolved.id} />
+        )}
 
         {/* 數值欄 */}
         <div className="flex flex-wrap gap-3">

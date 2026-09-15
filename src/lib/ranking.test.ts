@@ -4,7 +4,10 @@ import {
   entriesFor,
   evaluateDraft,
   gameBests,
+  gameTarget,
   keepPersonalBest,
+  seasonTargetForPlayer,
+  teamGameBests,
   teamThresholds,
   teamTopEntries,
   type EventPool,
@@ -603,5 +606,145 @@ describe('球季隔離', () => {
       pitches: [pitch('thisSeason', { seasonId: SEASON, playerId: 'p1', speed: 130 })],
     })
     expect(ids(entriesFor(p, 'pitchSpeed'))).toEqual(['thisSeason'])
+  })
+})
+
+describe('teamGameBests — 分隊看本場最佳', () => {
+  const p = pool({
+    pitches: [
+      pitch('strong1', { teamId: TEAM_A, playerId: 'a1', speed: 140 }),
+      pitch('strong2', { teamId: TEAM_A, playerId: 'a2', speed: 138 }),
+      pitch('weak1', { teamId: TEAM_B, playerId: 'b1', speed: 120 }),
+      pitch('weak2', { teamId: TEAM_B, playerId: 'b2', speed: 118 }),
+    ],
+  })
+
+  it('強隊打弱隊時，弱隊的最佳仍然看得到', () => {
+    expect(teamGameBests(p, 'g1', TEAM_A).pitchSpeed?.event.id).toBe('strong1')
+    expect(teamGameBests(p, 'g1', TEAM_B).pitchSpeed?.event.id).toBe('weak1')
+  })
+
+  it('合併的本場最佳只會有強隊那筆', () => {
+    expect(gameBests(p, 'g1').pitchSpeed?.event.id).toBe('strong1')
+  })
+
+  it('該隊該項目沒資料時是 null', () => {
+    expect(teamGameBests(p, 'g1', TEAM_A).distance).toBeNull()
+  })
+
+  it('只看這一場，不會混到別場', () => {
+    const multi = pool({
+      pitches: [
+        pitch('thisGame', { gameId: 'g1', teamId: TEAM_A, playerId: 'a1', speed: 120 }),
+        pitch('otherGame', { gameId: 'g3', teamId: TEAM_A, playerId: 'a1', speed: 150 }),
+      ],
+    })
+    expect(teamGameBests(multi, 'g1', TEAM_A).pitchSpeed?.event.id).toBe('thisGame')
+  })
+})
+
+describe('seasonTargetForPlayer — 這球要贏過多少才會動到季排名', () => {
+  it('名單沒滿而且他還沒有紀錄 → 怎樣都進得去', () => {
+    const p = pool({ pitches: [pitch('a', { playerId: 'p1', speed: 130 })] })
+    expect(seasonTargetForPlayer(p, TEAM_A, '新球員', 'pitchSpeed')).toBeNull()
+  })
+
+  it('完全沒有資料時也是怎樣都進得去', () => {
+    expect(seasonTargetForPlayer(pool(), TEAM_A, 'p1', 'pitchSpeed')).toBeNull()
+  })
+
+  it('名單沒滿但他已經有紀錄 → 要贏過自己成績才會變', () => {
+    const p = pool({
+      pitches: [
+        pitch('a', { playerId: 'p1', speed: 130 }),
+        pitch('b', { playerId: 'p2', speed: 125 }),
+      ],
+    })
+    expect(seasonTargetForPlayer(p, TEAM_A, 'p1', 'pitchSpeed')).toBe(130)
+  })
+
+  it('名單滿了、他不在榜上 → 要贏過第三名', () => {
+    const p = pool({
+      pitches: [
+        pitch('a', { playerId: 'p1', speed: 140 }),
+        pitch('b', { playerId: 'p2', speed: 135 }),
+        pitch('c', { playerId: 'p3', speed: 130 }),
+      ],
+    })
+    expect(seasonTargetForPlayer(p, TEAM_A, '場邊的人', 'pitchSpeed')).toBe(130)
+  })
+
+  it('名單滿了、他在榜上 → 要贏過自己（自己一定比第三名高）', () => {
+    const p = pool({
+      pitches: [
+        pitch('a', { playerId: 'p1', speed: 140 }),
+        pitch('b', { playerId: 'p2', speed: 135 }),
+        pitch('c', { playerId: 'p3', speed: 130 }),
+      ],
+    })
+    expect(seasonTargetForPlayer(p, TEAM_A, 'p1', 'pitchSpeed')).toBe(140)
+    expect(seasonTargetForPlayer(p, TEAM_A, 'p3', 'pitchSpeed')).toBe(130)
+  })
+
+  it('名單滿了、他有紀錄但排在三名外 → 取自己與第三名的大者（也就是第三名）', () => {
+    const p = pool({
+      pitches: [
+        pitch('a', { playerId: 'p1', speed: 140 }),
+        pitch('b', { playerId: 'p2', speed: 135 }),
+        pitch('c', { playerId: 'p3', speed: 130 }),
+        pitch('d', { playerId: 'p4', speed: 120 }),
+      ],
+    })
+    expect(seasonTargetForPlayer(p, TEAM_A, 'p4', 'pitchSpeed')).toBe(130)
+  })
+
+  it('用的是該球員的個人最佳，不是最近一筆', () => {
+    const p = pool({
+      pitches: [
+        pitch('best', { playerId: 'p1', speed: 140, createdAt: 1 }),
+        pitch('recent', { playerId: 'p1', speed: 110, createdAt: 9 }),
+        pitch('b', { playerId: 'p2', speed: 135 }),
+      ],
+    })
+    expect(seasonTargetForPlayer(p, TEAM_A, 'p1', 'pitchSpeed')).toBe(140)
+  })
+
+  it('只算自己這一隊', () => {
+    const p = pool({
+      pitches: [
+        pitch('mine', { teamId: TEAM_A, playerId: 'p1', speed: 120 }),
+        pitch('theirs1', { teamId: TEAM_B, playerId: 'q1', speed: 150 }),
+        pitch('theirs2', { teamId: TEAM_B, playerId: 'q2', speed: 149 }),
+        pitch('theirs3', { teamId: TEAM_B, playerId: 'q3', speed: 148 }),
+      ],
+    })
+    expect(seasonTargetForPlayer(p, TEAM_A, 'p1', 'pitchSpeed')).toBe(120)
+  })
+
+  it('四個項目各自計算', () => {
+    const p = pool({
+      pitches: [pitch('a', { playerId: 'p1', speed: 130, spin: 2000 })],
+      battedBalls: [batted('b', { playerId: 'p1', exitVelo: 115, distance: 45 })],
+    })
+    expect(seasonTargetForPlayer(p, TEAM_A, 'p1', 'pitchSpeed')).toBe(130)
+    expect(seasonTargetForPlayer(p, TEAM_A, 'p1', 'pitchSpin')).toBe(2000)
+    expect(seasonTargetForPlayer(p, TEAM_A, 'p1', 'exitVelo')).toBe(115)
+    expect(seasonTargetForPlayer(p, TEAM_A, 'p1', 'distance')).toBe(45)
+  })
+})
+
+describe('gameTarget — 這球要贏過多少才是本場最佳', () => {
+  it('回傳本場該項目目前的最高值', () => {
+    const p = pool({
+      pitches: [
+        pitch('a', { teamId: TEAM_A, playerId: 'p1', speed: 130 }),
+        pitch('b', { teamId: TEAM_B, playerId: 'q1', speed: 140 }),
+      ],
+    })
+    expect(gameTarget(p, 'g1', 'pitchSpeed')).toBe(140)
+  })
+
+  it('本場還沒有資料時是 null', () => {
+    expect(gameTarget(pool(), 'g1', 'pitchSpeed')).toBeNull()
   })
 })

@@ -1,15 +1,20 @@
 /**
- * 記錄頁右側資訊欄：本場四項最佳，以及兩隊的季前三名門檻。
+ * 記錄頁右側資訊欄。
  *
- * 門檻要醒目——這是決定「這球要不要記」的依據，
- * 我一邊看回放一邊掃這一欄，所以數字要大、未滿三人要一眼看得出來。
+ * 「本場最佳」分兩隊並排，不是兩隊合併成一欄——
+ * 強隊打弱隊時，合併的那一欄會整排被強隊佔滿，弱隊現在最好的是多少完全看不到，
+ * 就只能自己記在腦袋裡。合併後的第一名用琥珀色標出來。
+ *
+ * 「季前三門檻」是決定這球要不要記的依據，數字要大、未滿三人要一眼看得出來。
  */
 
 import { useSeason } from '../../state/SeasonProvider'
 import {
   RANK_CATEGORIES,
   gameBests,
+  teamGameBests,
   teamThresholds,
+  type RankCategory,
   type RankEntry,
   type Threshold,
 } from '../../lib/ranking'
@@ -19,16 +24,34 @@ import { Panel } from '../../components/ui'
 
 export function SidePanel({ game, teamA, teamB }: { game: Game; teamA: Team; teamB: Team }) {
   const { pool } = useSeason()
-  const bests = gameBests(pool, game.id)
+  const overall = gameBests(pool, game.id)
+  const bestsA = teamGameBests(pool, game.id, teamA.id)
+  const bestsB = teamGameBests(pool, game.id, teamB.id)
 
   return (
     <div className="space-y-4">
-      <Panel title="本場目前最佳">
-        <ul className="space-y-2.5">
+      <Panel title="本場最佳">
+        <div className="grid grid-cols-[auto_1fr_1fr] gap-x-2 gap-y-1">
+          <span />
+          <span className="truncate pb-1 text-center text-xs font-semibold text-slate-400">
+            {teamA.name}
+          </span>
+          <span className="truncate pb-1 text-center text-xs font-semibold text-slate-400">
+            {teamB.name}
+          </span>
+
           {RANK_CATEGORIES.map((meta) => (
-            <BestRow key={meta.key} label={meta.label} entry={bests[meta.key]} />
+            <BestRow
+              key={meta.key}
+              label={meta.label}
+              category={meta.key}
+              a={bestsA[meta.key]}
+              b={bestsB[meta.key]}
+              overall={overall[meta.key]}
+            />
           ))}
-        </ul>
+        </div>
+        <p className="mt-2 text-[11px] text-slate-600">琥珀色是兩隊合併後的本場第一，會上單場圖卡。</p>
       </Panel>
 
       <ThresholdPanel team={teamA} />
@@ -37,27 +60,65 @@ export function SidePanel({ game, teamA, teamB }: { game: Game; teamA: Team; tea
   )
 }
 
-function BestRow({ label, entry }: { label: string; entry: RankEntry | null }) {
-  const { teamById, playerById } = useSeason()
+function BestRow({
+  label,
+  category,
+  a,
+  b,
+  overall,
+}: {
+  label: string
+  category: RankCategory
+  a: RankEntry | null
+  b: RankEntry | null
+  overall: RankEntry | null
+}) {
+  return (
+    <>
+      <span className="self-center whitespace-nowrap text-xs text-slate-400">{label}</span>
+      <BestCell entry={a} category={category} isOverall={a !== null && a === overall} />
+      <BestCell entry={b} category={category} isOverall={b !== null && b === overall} />
+    </>
+  )
+}
+
+function BestCell({
+  entry,
+  category,
+  isOverall,
+}: {
+  entry: RankEntry | null
+  category: RankCategory
+  isOverall: boolean
+}) {
+  const { playerById } = useSeason()
   const player = playerById(entry?.playerId)
-  const team = teamById(entry?.teamId)
+
+  if (!entry) {
+    return (
+      <span className="rounded bg-white/[0.02] py-1 text-center text-sm text-slate-700">
+        {DASH}
+      </span>
+    )
+  }
 
   return (
-    <li className="flex items-baseline gap-2">
-      <span className="w-20 shrink-0 text-xs text-slate-400">{label}</span>
-      {entry ? (
-        <>
-          <span className="font-mono text-base font-bold text-amber1">
-            {formatPrimary(entry.category, entry.primary)}
-          </span>
-          <span className="truncate text-xs text-slate-400">
-            {team?.name} {player?.number} {player?.name}
-          </span>
-        </>
-      ) : (
-        <span className="text-sm text-slate-600">{DASH}</span>
-      )}
-    </li>
+    <span
+      className={`rounded px-1 py-0.5 text-center leading-tight ${
+        isOverall ? 'bg-amber1/10' : 'bg-white/[0.02]'
+      }`}
+    >
+      <span
+        className={`block font-mono text-sm font-bold tabular-nums ${
+          isOverall ? 'text-amber1' : 'text-slate-200'
+        }`}
+      >
+        {formatPrimary(category, entry.primary)}
+      </span>
+      <span className="block truncate text-[10px] text-slate-500">
+        {player ? `${player.number} ${player.name}` : DASH}
+      </span>
+    </span>
   )
 }
 
