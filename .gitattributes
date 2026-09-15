@@ -1,0 +1,6 @@
+# repo 內一律用 LF 儲存，checkout 到 Windows 時再由 git 轉換。
+# 本機是 Windows、CI 是 Linux，統一換行才不會出現整份檔案假性變更。
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.woff2 binary
