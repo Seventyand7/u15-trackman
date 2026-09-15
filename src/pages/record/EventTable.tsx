@@ -42,15 +42,15 @@ export function EventTable({ game }: { game: Game }) {
     <div className="grid gap-4 xl:grid-cols-2">
       <Panel
         title="投球紀錄"
-        right={<span className="text-xs text-slate-500">{gamePitches.length} 筆</span>}
+        right={<span className="text-[13px] text-slate-400">{gamePitches.length} 筆</span>}
       >
         {gamePitches.length === 0 ? (
           <Empty>這場還沒有投球紀錄</Empty>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-[15px]">
               <thead>
-                <tr className="border-b border-white/10 text-left text-xs text-slate-500">
+                <tr className="border-b border-white/10 text-left text-[13px] text-slate-400">
                   <th className="pb-2 pr-3 font-medium">球員</th>
                   <th className="pb-2 pr-3 font-medium">球速</th>
                   <th className="pb-2 pr-3 font-medium">轉速</th>
@@ -73,15 +73,15 @@ export function EventTable({ game }: { game: Game }) {
 
       <Panel
         title="擊球紀錄"
-        right={<span className="text-xs text-slate-500">{gameBatted.length} 筆</span>}
+        right={<span className="text-[13px] text-slate-400">{gameBatted.length} 筆</span>}
       >
         {gameBatted.length === 0 ? (
           <Empty>這場還沒有擊球紀錄</Empty>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-[15px]">
               <thead>
-                <tr className="border-b border-white/10 text-left text-xs text-slate-500">
+                <tr className="border-b border-white/10 text-left text-[13px] text-slate-400">
                   <th className="pb-2 pr-3 font-medium">球員</th>
                   <th className="pb-2 pr-3 font-medium">初速</th>
                   <th className="pb-2 pr-3 font-medium">仰角</th>
@@ -112,7 +112,7 @@ function PlayerCell({ teamId, playerId }: { teamId: Id; playerId: Id }) {
   return (
     <td className="py-2 pr-3">
       <div className="whitespace-nowrap">
-        <span className="text-xs text-slate-500">{team?.name ?? DASH}</span>{' '}
+        <span className="text-[13px] text-slate-400">{team?.name ?? DASH}</span>{' '}
         <span className="font-mono font-semibold">{player?.number ?? DASH}</span>{' '}
         <span>{player?.name ?? '（已刪除）'}</span>
       </div>
@@ -174,7 +174,7 @@ function EditCell({
   /** 時間碼欄要自動補冒號，而且游標要釘在最後（見 VideoTimeInput） */
   videoTime?: boolean
 }) {
-  const cls = 'field w-24 !py-1 font-mono text-xs'
+  const cls = 'field w-24 !py-1 font-mono text-[13px]'
   return (
     <td className="py-1.5 pr-3">
       {videoTime ? (
@@ -280,9 +280,9 @@ function PitchRow({ pitch }: { pitch: Pitch }) {
       <td className="py-2 pr-3 font-mono tabular-nums">{formatSpeed(pitch.speed)}</td>
       <td className="py-2 pr-3 font-mono tabular-nums">{formatSpin(pitch.spin)}</td>
       <td className="py-2 pr-3 font-mono">{formatText(pitch.axis)}</td>
-      <td className="py-2 pr-3 text-xs text-slate-400">{formatText(pitch.hBreak)}</td>
-      <td className="py-2 pr-3 text-xs text-slate-400">{formatText(pitch.vBreak)}</td>
-      <td className="py-2 pr-3 font-mono text-xs text-slate-500">{formatText(pitch.videoTime)}</td>
+      <td className="py-2 pr-3 text-[13px] text-slate-300">{formatText(pitch.hBreak)}</td>
+      <td className="py-2 pr-3 text-[13px] text-slate-300">{formatText(pitch.vBreak)}</td>
+      <td className="py-2 pr-3 font-mono text-[13px] text-slate-400">{formatText(pitch.videoTime)}</td>
       <RowActions
         editing={false}
         onEdit={startEdit}
@@ -381,7 +381,7 @@ function BattedRow({ ball }: { ball: BattedBall }) {
       <td className="py-2 pr-3 font-mono tabular-nums">{formatSpeed(ball.exitVelo)}</td>
       <td className="py-2 pr-3 font-mono tabular-nums">{formatAngle(ball.launchAngle)}</td>
       <td className="py-2 pr-3 font-mono tabular-nums">{formatDistance(ball.distance)}</td>
-      <td className="py-2 pr-3 font-mono text-xs text-slate-500">{formatText(ball.videoTime)}</td>
+      <td className="py-2 pr-3 font-mono text-[13px] text-slate-400">{formatText(ball.videoTime)}</td>
       <RowActions
         editing={false}
         onEdit={startEdit}

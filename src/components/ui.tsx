@@ -24,7 +24,7 @@ export function Panel({
 
 export function Empty({ children }: { children: ReactNode }) {
   return (
-    <p className="rounded-lg border border-dashed border-white/10 px-4 py-6 text-center text-sm text-slate-500">
+    <p className="rounded-lg border border-dashed border-white/10 px-4 py-6 text-center text-sm text-slate-400">
       {children}
     </p>
   )

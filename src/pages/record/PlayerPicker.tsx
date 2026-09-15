@@ -219,11 +219,11 @@ function PlayerEditForm({
         )}
       </div>
 
-      <p className="mt-2 text-xs text-slate-400">
+      <p className="mt-2 text-[13px] text-slate-300">
         將同步更新此球員所有歷史紀錄（共 {eventCount} 筆）　<Kbd>Enter</Kbd> 儲存 <Kbd>Esc</Kbd> 取消
       </p>
 
-      {error && <p className="mt-1 text-xs text-red-300">{error}</p>}
+      {error && <p className="mt-1 text-[13px] text-red-300">{error}</p>}
     </div>
   )
 }
@@ -269,7 +269,7 @@ export function SameNameDecision({
           取消
         </button>
       </div>
-      <p className="mt-2 text-xs text-slate-400">
+      <p className="mt-2 text-[13px] text-slate-300">
         選錯的話，之後可以在資料管理頁合併球員修正。
       </p>
     </div>

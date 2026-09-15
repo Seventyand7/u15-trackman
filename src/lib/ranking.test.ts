@@ -6,6 +6,8 @@ import {
   gameBests,
   gameTarget,
   keepPersonalBest,
+  playerGameBests,
+  playerSeasonBests,
   seasonTargetForPlayer,
   teamGameBests,
   teamThresholds,
@@ -746,5 +748,45 @@ describe('gameTarget — 這球要贏過多少才是本場最佳', () => {
 
   it('本場還沒有資料時是 null', () => {
     expect(gameTarget(pool(), 'g1', 'pitchSpeed')).toBeNull()
+  })
+})
+
+describe('playerGameBests / playerSeasonBests — 這位球員自己的成績', () => {
+  const p = pool({
+    pitches: [
+      pitch('g1a', { gameId: 'g1', playerId: 'ace', speed: 130, spin: 2100 }),
+      pitch('g1b', { gameId: 'g1', playerId: 'ace', speed: 128, spin: 2300 }),
+      pitch('g3a', { gameId: 'g3', playerId: 'ace', speed: 141, spin: 2000 }),
+      pitch('other', { gameId: 'g1', playerId: 'someone-else', speed: 150, spin: 2900 }),
+    ],
+  })
+
+  it('本場最佳只看這一場，不含他別場的成績', () => {
+    expect(playerGameBests(p, 'g1', 'ace').pitchSpeed?.event.id).toBe('g1a')
+  })
+
+  it('季最佳跨場次取最好的', () => {
+    expect(playerSeasonBests(p, 'ace').pitchSpeed?.event.id).toBe('g3a')
+  })
+
+  it('不會混到別人的成績', () => {
+    expect(playerSeasonBests(p, 'ace').pitchSpeed?.primary).toBe(141)
+    expect(playerGameBests(p, 'g1', 'ace').pitchSpeed?.primary).toBe(130)
+  })
+
+  it('各項目分開算，轉速最佳可能是另一筆', () => {
+    expect(playerGameBests(p, 'g1', 'ace').pitchSpin?.event.id).toBe('g1b')
+  })
+
+  it('這位球員該項目沒資料時是 null', () => {
+    expect(playerSeasonBests(p, 'ace').distance).toBeNull()
+    expect(playerGameBests(p, 'g2', 'ace').pitchSpeed).toBeNull()
+  })
+
+  it('沒有任何紀錄的新球員四項都是 null', () => {
+    const bests = playerSeasonBests(p, '全新的人')
+    expect([bests.pitchSpeed, bests.pitchSpin, bests.exitVelo, bests.distance]).toEqual([
+      null, null, null, null,
+    ])
   })
 })

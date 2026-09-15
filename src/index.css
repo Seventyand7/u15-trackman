@@ -67,7 +67,7 @@
     @apply rounded-xl border border-white/10 bg-night-850/80 shadow-lg shadow-black/30 backdrop-blur-sm;
   }
   .panel-head {
-    @apply flex items-center gap-2 border-b border-white/10 px-4 py-2.5 text-sm font-semibold tracking-wide text-slate-300;
+    @apply flex items-center gap-2 border-b border-white/10 px-4 py-2.5 text-[15px] font-semibold tracking-wide text-slate-200;
   }
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium
@@ -88,6 +88,6 @@
            placeholder:text-slate-500 focus:border-amber1/60 focus:outline-none focus:ring-1 focus:ring-amber1/60;
   }
   .label {
-    @apply mb-1 block text-xs font-medium uppercase tracking-wider text-slate-400;
+    @apply mb-1 block text-[13px] font-medium tracking-wide text-slate-300;
   }
 }

@@ -412,7 +412,7 @@ export function EventForm({
         {warnings.length > 0 && (
           <ul className="space-y-1">
             {warnings.map((w) => (
-              <li key={w.field} className="text-xs text-amber-300">
+              <li key={w.field} className="text-[13px] text-amber-300">
                 ⚠️ {w.message}
               </li>
             ))}
@@ -420,7 +420,7 @@ export function EventForm({
         )}
 
         {duplicate && (
-          <p className="rounded-lg border border-orange-500/30 bg-orange-500/10 px-3 py-2 text-xs text-orange-300">
+          <p className="rounded-lg border border-orange-500/30 bg-orange-500/10 px-3 py-2 text-[13px] text-orange-300">
             ⚠️ 可能重複：這場已經有一筆同球員、數值完全相同的紀錄了
           </p>
         )}
@@ -473,11 +473,11 @@ export function EventForm({
           <button type="button" className="btn-ghost" onClick={clearAll}>
             清空
           </button>
-          <span className="text-xs text-slate-500">
+          <span className="text-[13px] text-slate-400">
             <Kbd>Enter</Kbd> 送出 <Kbd>Esc</Kbd> 清空 <Kbd>Tab</Kbd> 下一欄
           </span>
           {flash && (
-            <span key={flash} className="ml-auto animate-pop-in text-xs font-medium text-emerald-300">
+            <span key={flash} className="ml-auto animate-pop-in text-[13px] font-medium text-emerald-300">
               {flash}
             </span>
           )}
@@ -498,7 +498,7 @@ function ImpactBadge({ impact, teamName }: { impact: DraftImpact; teamName: stri
     parts.push(`${prefix}${teamName} 季第 ${impact.seasonRank} 名`)
   }
   return (
-    <span className="animate-record-glow rounded-lg border border-amber1/40 bg-amber1/15 px-3 py-1.5 text-xs font-semibold text-amber1">
+    <span className="animate-record-glow rounded-lg border border-amber1/40 bg-amber1/15 px-3 py-1.5 text-[13px] font-semibold text-amber1">
       {parts.join(' · ')}
     </span>
   )

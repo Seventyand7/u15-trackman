@@ -33,10 +33,10 @@ export function SidePanel({ game, teamA, teamB }: { game: Game; teamA: Team; tea
       <Panel title="本場最佳">
         <div className="grid grid-cols-[auto_1fr_1fr] gap-x-2 gap-y-1">
           <span />
-          <span className="truncate pb-1 text-center text-xs font-semibold text-slate-400">
+          <span className="truncate pb-1 text-center text-[13px] font-semibold text-slate-200">
             {teamA.name}
           </span>
-          <span className="truncate pb-1 text-center text-xs font-semibold text-slate-400">
+          <span className="truncate pb-1 text-center text-[13px] font-semibold text-slate-200">
             {teamB.name}
           </span>
 
@@ -51,7 +51,9 @@ export function SidePanel({ game, teamA, teamB }: { game: Game; teamA: Team; tea
             />
           ))}
         </div>
-        <p className="mt-2 text-[11px] text-slate-600">琥珀色是兩隊合併後的本場第一，會上單場圖卡。</p>
+        <p className="mt-2.5 text-[11px] leading-relaxed text-slate-500">
+          琥珀色是兩隊合併後的本場第一，會上單場圖卡。
+        </p>
       </Panel>
 
       <ThresholdPanel team={teamA} />
@@ -75,7 +77,7 @@ function BestRow({
 }) {
   return (
     <>
-      <span className="self-center whitespace-nowrap text-xs text-slate-400">{label}</span>
+      <span className="self-center whitespace-nowrap text-[13px] text-slate-300">{label}</span>
       <BestCell entry={a} category={category} isOverall={a !== null && a === overall} />
       <BestCell entry={b} category={category} isOverall={b !== null && b === overall} />
     </>
@@ -96,7 +98,7 @@ function BestCell({
 
   if (!entry) {
     return (
-      <span className="rounded bg-white/[0.02] py-1 text-center text-sm text-slate-700">
+      <span className="rounded bg-white/[0.02] py-1 text-center text-base text-slate-600">
         {DASH}
       </span>
     )
@@ -109,13 +111,13 @@ function BestCell({
       }`}
     >
       <span
-        className={`block font-mono text-sm font-bold tabular-nums ${
-          isOverall ? 'text-amber1' : 'text-slate-200'
+        className={`block font-mono text-base font-bold tabular-nums ${
+          isOverall ? 'text-amber1' : 'text-slate-100'
         }`}
       >
         {formatPrimary(category, entry.primary)}
       </span>
-      <span className="block truncate text-[10px] text-slate-500">
+      <span className="block truncate text-xs text-slate-400">
         {player ? `${player.number} ${player.name}` : DASH}
       </span>
     </span>
@@ -130,7 +132,7 @@ function ThresholdPanel({ team }: { team: Team }) {
     <Panel
       title={
         <span>
-          <span className="text-slate-500">季前三門檻 ·</span> {team.name}
+          <span className="text-slate-400">季前三門檻 ·</span> {team.name}
         </span>
       }
     >
@@ -146,9 +148,9 @@ function ThresholdPanel({ team }: { team: Team }) {
 function ThresholdRow({ label, threshold }: { label: string; threshold: Threshold }) {
   return (
     <li className="flex items-baseline justify-between gap-2">
-      <span className="text-xs text-slate-400">{label}</span>
+      <span className="text-[13px] text-slate-300">{label}</span>
       {threshold.kind === 'open' ? (
-        <span className="rounded bg-emerald-500/15 px-2 py-0.5 text-xs font-semibold text-emerald-300">
+        <span className="rounded bg-emerald-500/15 px-2 py-0.5 text-[13px] font-semibold text-emerald-300">
           未滿 3 人，都記
         </span>
       ) : (

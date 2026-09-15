@@ -97,6 +97,7 @@ export const EMPTY_POOL: EventPool = { pitches: [], battedBalls: [], games: [] }
 export interface EntryFilter {
   gameId?: Id
   teamId?: Id
+  playerId?: Id
 }
 
 // ---------------------------------------------------------------------------
@@ -143,9 +144,10 @@ function gameIndex(games: readonly Game[]): Map<Id, Game> {
   return new Map(games.map((g) => [g.id, g]))
 }
 
-function matches(e: { gameId: Id; teamId: Id }, filter: EntryFilter): boolean {
+function matches(e: { gameId: Id; teamId: Id; playerId: Id }, filter: EntryFilter): boolean {
   if (filter.gameId !== undefined && e.gameId !== filter.gameId) return false
   if (filter.teamId !== undefined && e.teamId !== filter.teamId) return false
+  if (filter.playerId !== undefined && e.playerId !== filter.playerId) return false
   return true
 }
 
@@ -251,6 +253,28 @@ export function teamGameBests(
   teamId: Id,
 ): Record<RankCategory, RankEntry | null> {
   return byCategory((meta) => entriesFor(pool, meta.key, { gameId, teamId })[0] ?? null)
+}
+
+/**
+ * 這位球員在這場比賽的各項目最佳。
+ *
+ * 換上第二位投手時，他的球速就算沒破全場紀錄還是要記——季前三名是各隊各算的。
+ * 所以要看得到他自己現在的水準在哪，而不是只看到全場第一名那個數字。
+ */
+export function playerGameBests(
+  pool: EventPool,
+  gameId: Id,
+  playerId: Id,
+): Record<RankCategory, RankEntry | null> {
+  return byCategory((meta) => entriesFor(pool, meta.key, { gameId, playerId })[0] ?? null)
+}
+
+/** 這位球員這一季的各項目最佳（跨場次）。 */
+export function playerSeasonBests(
+  pool: EventPool,
+  playerId: Id,
+): Record<RankCategory, RankEntry | null> {
+  return byCategory((meta) => entriesFor(pool, meta.key, { playerId })[0] ?? null)
 }
 
 // ---------------------------------------------------------------------------

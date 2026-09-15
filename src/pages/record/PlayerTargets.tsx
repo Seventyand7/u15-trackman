@@ -1,12 +1,15 @@
 /**
- * 「這一球要贏過多少才有意義」。
+ * 選到球員後顯示的四個參考數值，回答「這一球要不要記」。
  *
- * 選到球員的當下就顯示，不用等輸入數值——決定要不要記是在看回放的當下做的，
- * 而且換投手之後門檻就換了一組，記在腦袋裡很容易記錯。
+ * 上面兩列是這位球員自己的成績，下面兩列是要贏過的目標：
  *
- * 兩個門檻的意義不一樣：
- *   季排名：贏過這個數字，該隊的季前三名才會變動（見 seasonTargetForPlayer）
- *   本場最佳：贏過這個數字，才會取代單場圖卡上那一筆（兩隊合併後的第一名）
+ *   本場個人 / 本季個人   他現在的水準在哪。換上第二位投手時，
+ *                        他的球沒破全場紀錄還是要記——季前三名是各隊各算的，
+ *                        所以要看得到他自己的數字，不是只看到全場第一名。
+ *   季前三門檻           贏過這個，該隊的季前三名才會變動（見 seasonTargetForPlayer）
+ *   本場最佳             贏過這個，才會取代單場圖卡上那一筆（兩隊合併後的第一名）
+ *
+ * 選到球員的當下就顯示，不用等輸入數值——決定要不要記是在看回放的當下做的。
  */
 
 import { useMemo } from 'react'
@@ -14,6 +17,8 @@ import { useSeason } from '../../state/SeasonProvider'
 import {
   CATEGORY_META,
   gameTarget,
+  playerGameBests,
+  playerSeasonBests,
   seasonTargetForPlayer,
   type EventKind,
   type RankCategory,
@@ -24,6 +29,15 @@ import type { Id } from '../../types/models'
 const CATEGORIES: Record<EventKind, RankCategory[]> = {
   pitch: ['pitchSpeed', 'pitchSpin'],
   battedBall: ['exitVelo', 'distance'],
+}
+
+interface Row {
+  label: string
+  /** 要贏過的目標（下面兩列）用不同顏色跟自己的成績分開 */
+  isTarget: boolean
+  values: (number | null)[]
+  /** 沒有值的時候顯示什麼 */
+  emptyText: string
 }
 
 export function PlayerTargets({
@@ -38,60 +52,94 @@ export function PlayerTargets({
   playerId: Id
 }) {
   const { pool } = useSeason()
+  const categories = CATEGORIES[kind]
 
-  const rows = useMemo(
-    () =>
-      CATEGORIES[kind].map((category) => ({
-        category,
-        label: CATEGORY_META[category].label,
-        season: seasonTargetForPlayer(pool, teamId, playerId, category),
-        game: gameTarget(pool, gameId, category),
-      })),
-    [kind, pool, teamId, playerId, gameId],
-  )
+  const rows = useMemo<Row[]>(() => {
+    const ownGame = playerGameBests(pool, gameId, playerId)
+    const ownSeason = playerSeasonBests(pool, playerId)
+    return [
+      {
+        label: '本場個人',
+        isTarget: false,
+        values: categories.map((c) => ownGame[c]?.primary ?? null),
+        emptyText: '還沒有',
+      },
+      {
+        label: '本季個人',
+        isTarget: false,
+        values: categories.map((c) => ownSeason[c]?.primary ?? null),
+        emptyText: '還沒有',
+      },
+      {
+        label: '季前三門檻',
+        isTarget: true,
+        values: categories.map((c) => seasonTargetForPlayer(pool, teamId, playerId, c)),
+        emptyText: '都記',
+      },
+      {
+        label: '本場最佳',
+        isTarget: true,
+        values: categories.map((c) => gameTarget(pool, gameId, c)),
+        emptyText: '都記',
+      },
+    ]
+  }, [pool, gameId, teamId, playerId, categories])
+
+  const gridCols = `7.5rem repeat(${categories.length}, minmax(0, 1fr))`
 
   return (
-    <div className="rounded-lg border border-white/10 bg-night-900/50 px-3 py-2">
-      {/*
-        標題要寫「這位球員」：側欄的季前三門檻是整隊的，隊上名額沒滿時會寫「都記」，
-        但如果這位球員自己已經在榜上，打出比他自己差的成績其實什麼都不會變。
-        兩個數字都對，只是問的問題不一樣，標題講清楚才不會看起來互相矛盾。
-      */}
-      <p className="mb-1 text-[11px] text-slate-500">這位球員要贏過</p>
-      <div
-        className="grid gap-x-3 gap-y-1"
-        style={{ gridTemplateColumns: `auto repeat(${rows.length}, minmax(0, 1fr))` }}
-      >
+    <div className="rounded-lg border border-white/10 bg-night-900/60 px-3 py-2.5">
+      <div className="grid items-center gap-x-3 gap-y-1.5" style={{ gridTemplateColumns: gridCols }}>
         <span />
-        {rows.map((r) => (
-          <span key={r.category} className="text-center text-[11px] text-slate-400">
-            {r.label.replace('最快', '').replace('最遠', '')}
+        {categories.map((c) => (
+          <span key={c} className="text-center text-[13px] font-medium text-slate-300">
+            {CATEGORY_META[c].label.replace('最快', '').replace('最遠', '')}
           </span>
         ))}
 
-        <span className="self-center whitespace-nowrap text-[11px] text-slate-500">季排名</span>
-        {rows.map((r) => (
-          <Target key={r.category} category={r.category} value={r.season} />
-        ))}
-
-        <span className="self-center whitespace-nowrap text-[11px] text-slate-500">本場最佳</span>
-        {rows.map((r) => (
-          <Target key={r.category} category={r.category} value={r.game} />
+        {rows.map((row) => (
+          <Row key={row.label} row={row} categories={categories} />
         ))}
       </div>
     </div>
   )
 }
 
-function Target({ category, value }: { category: RankCategory; value: number | null }) {
-  if (value === null) {
-    return (
-      <span className="text-center text-xs font-semibold text-emerald-300">都記</span>
-    )
-  }
+function Row({ row, categories }: { row: Row; categories: RankCategory[] }) {
   return (
-    <span className="text-center font-mono text-sm font-semibold tabular-nums text-slate-200">
-      {formatPrimary(category, value)}
-    </span>
+    <>
+      <span
+        className={`whitespace-nowrap text-[13px] ${
+          row.isTarget ? 'font-medium text-amber1/80' : 'text-slate-400'
+        }`}
+      >
+        {row.isTarget && <span className="mr-1 text-amber1/50">▸</span>}
+        {row.label}
+      </span>
+      {categories.map((c, i) => {
+        const value = row.values[i] ?? null
+        return (
+          <span key={c} className="text-center">
+            {value === null ? (
+              <span
+                className={`text-[13px] ${
+                  row.isTarget ? 'font-semibold text-emerald-300' : 'text-slate-600'
+                }`}
+              >
+                {row.emptyText}
+              </span>
+            ) : (
+              <span
+                className={`font-mono text-base font-semibold tabular-nums ${
+                  row.isTarget ? 'text-slate-100' : 'text-slate-300'
+                }`}
+              >
+                {formatPrimary(c, value)}
+              </span>
+            )}
+          </span>
+        )
+      })}
+    </>
   )
 }
