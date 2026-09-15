@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
+import { useSeason } from '../state/SeasonProvider'
 import { Brand } from './Brand'
 
 const NAV = [
@@ -12,6 +13,7 @@ const NAV = [
 
 export function AppShell() {
   const { user, signOutNow } = useAuth()
+  const { season } = useSeason()
 
   return (
     <div className="min-h-dvh">
@@ -38,7 +40,12 @@ export function AppShell() {
           </nav>
 
           <div className="ml-auto flex items-center gap-3">
-            <span className="hidden text-xs text-slate-500 sm:inline">{user?.email}</span>
+            {season && (
+              <span className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-medium text-slate-300">
+                {season.name}
+              </span>
+            )}
+            <span className="hidden text-xs text-slate-500 lg:inline">{user?.email}</span>
             <button type="button" onClick={() => void signOutNow()} className="btn-ghost !py-1.5 text-xs">
               登出
             </button>

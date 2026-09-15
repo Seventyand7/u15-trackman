@@ -1,6 +1,7 @@
-import { initializeApp, type FirebaseApp } from 'firebase/app'
+import { getApp, getApps, initializeApp, type FirebaseApp } from 'firebase/app'
 import { getAuth, GoogleAuthProvider, type Auth } from 'firebase/auth'
 import {
+  getFirestore,
   initializeFirestore,
   persistentLocalCache,
   persistentSingleTabManager,
@@ -16,7 +17,8 @@ function app(): FirebaseApp {
   if (!isFirebaseConfigured) {
     throw new Error('Firebase 尚未設定，請填寫 src/firebase/config.ts')
   }
-  if (!_app) _app = initializeApp(firebaseConfig)
+  // getApps() 是為了開發時的 HMR：模組被重新載入時不要再 initializeApp 一次
+  if (!_app) _app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig)
   return _app
 }
 
@@ -32,9 +34,14 @@ export function auth(): Auth {
  */
 export function db(): Firestore {
   if (!_db) {
-    _db = initializeFirestore(app(), {
-      localCache: persistentLocalCache({ tabManager: persistentSingleTabManager(undefined) }),
-    })
+    try {
+      _db = initializeFirestore(app(), {
+        localCache: persistentLocalCache({ tabManager: persistentSingleTabManager(undefined) }),
+      })
+    } catch {
+      // 已經啟動過（開發時的 HMR），沿用現有的那個
+      _db = getFirestore(app())
+    }
   }
   return _db
 }

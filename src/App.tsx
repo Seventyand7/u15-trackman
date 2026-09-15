@@ -5,6 +5,7 @@ import { DeniedPage } from './components/DeniedPage'
 import { LoginPage } from './components/LoginPage'
 import { SetupNeededPage } from './components/SetupNeededPage'
 import { isFirebaseConfigured } from './firebase/config'
+import { SeasonProvider } from './state/SeasonProvider'
 import CardsPage from './pages/CardsPage'
 import DataPage from './pages/DataPage'
 import RankingPage from './pages/RankingPage'
@@ -28,18 +29,20 @@ function Gate() {
 
   // 登入且在白名單內：GitHub Pages 不能處理 SPA 的 history 路由，所以用 HashRouter。
   return (
-    <HashRouter>
-      <Routes>
-        <Route element={<AppShell />}>
-          <Route path="/record" element={<RecordPage />} />
-          <Route path="/cards" element={<CardsPage />} />
-          <Route path="/ranking" element={<RankingPage />} />
-          <Route path="/setup" element={<SetupPage />} />
-          <Route path="/data" element={<DataPage />} />
-          <Route path="*" element={<Navigate to="/record" replace />} />
-        </Route>
-      </Routes>
-    </HashRouter>
+    <SeasonProvider>
+      <HashRouter>
+        <Routes>
+          <Route element={<AppShell />}>
+            <Route path="/record" element={<RecordPage />} />
+            <Route path="/cards" element={<CardsPage />} />
+            <Route path="/ranking" element={<RankingPage />} />
+            <Route path="/setup" element={<SetupPage />} />
+            <Route path="/data" element={<DataPage />} />
+            <Route path="*" element={<Navigate to="/record" replace />} />
+          </Route>
+        </Routes>
+      </HashRouter>
+    </SeasonProvider>
   )
 }
 

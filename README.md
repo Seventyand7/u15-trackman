@@ -12,7 +12,7 @@
 |---|---|---|
 | 1 | 專案骨架、Firebase 連線、Google 登入與白名單、Security Rules、GitHub Actions 部署 | ✅ 完成 |
 | 2 | `ranking.ts`、球員合併邏輯與完整單元測試 | ✅ 完成 |
-| 3 | 設定頁、記錄頁 | 待做 |
+| 3 | 設定頁、記錄頁 | ✅ 完成 |
 | 4 | 圖卡輸出頁 ← 到這裡就能開始每週使用 | 待做 |
 | 5 | 季排名頁、CSV | 待做 |
 | 6 | 資料管理頁 | 待做 |
@@ -166,6 +166,8 @@ src/
   auth/AuthProvider.tsx        登入狀態機：loading / signed-out / allowed / denied
   components/                  AppShell、登入頁、無權限頁、設定引導頁
   pages/                       五個分頁
-  lib/                         純邏輯（階段 2 起：ranking.ts 等）
+  lib/                         純邏輯：ranking / players / format / validation
+  state/SeasonProvider.tsx     目前球季的全部資料（訂閱 Firestore，排名在前端算）
+  firebase/repo.ts             唯一直接碰 Firestore 的地方
   types/                       資料模型型別
 ```
