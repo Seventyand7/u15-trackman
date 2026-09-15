@@ -14,7 +14,7 @@
 | 2 | `ranking.ts`、球員合併邏輯與完整單元測試 | ✅ 完成 |
 | 3 | 設定頁、記錄頁 | ✅ 完成 |
 | 4 | 圖卡輸出頁 ← 到這裡就能開始每週使用 | ✅ 完成 |
-| 5 | 季排名頁、CSV | 待做 |
+| 5 | 季排名頁、CSV | ✅ 完成 |
 | 6 | 資料管理頁 | 待做 |
 
 ---
@@ -186,7 +186,9 @@ src/
   lib/                         純邏輯：ranking / players / format / validation / cardConfig
   lib/fontEmbed.ts             截圖用的字型內嵌（見下方「圖卡字型」）
   lib/exportImage.ts           PNG／剪貼簿／ZIP
-  components/card/             白底圖卡版型與欄位勾選面板
+  components/card/cardParts.tsx  圖卡共用版型零件（單場與季排名共用）
+  components/card/             GameCard／RankingCard／欄位勾選面板
+  lib/csv.ts                   季排名 CSV（帶 BOM，Excel 開中文才不會亂碼）
   state/SeasonProvider.tsx     目前球季的全部資料（訂閱 Firestore，排名在前端算）
   firebase/repo.ts             唯一直接碰 Firestore 的地方
   types/                       資料模型型別

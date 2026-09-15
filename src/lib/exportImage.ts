@@ -6,6 +6,7 @@ import { toSvg } from 'html-to-image'
 import JSZip from 'jszip'
 import { ensureFontsReady, loadFontEmbedCSS } from './fontEmbed'
 import { compactDate, formatOrder } from './format'
+import { seasonSlug } from './csv'
 import type { Game, Team } from '../types/models'
 
 /** 規格要求 2 以上。490px 寬 × 2 = 980px，貼 FB 綽綽有餘。 */
@@ -125,4 +126,14 @@ export function mergedCardFilename(date: string, orders: readonly number[]): str
 /** '20260913_單場數據.zip' */
 export function zipFilename(date: string): string {
   return `${compactDate(date)}_單場數據.zip`
+}
+
+/** '2026秋季_閃電女孩_季排名.png' */
+export function rankingCardFilename(seasonName: string, teamName: string): string {
+  return `${seasonSlug(seasonName)}_${safe(teamName)}_季排名.png`
+}
+
+/** '2026秋季_季排名.zip' */
+export function rankingZipFilename(seasonName: string): string {
+  return `${seasonSlug(seasonName)}_季排名.zip`
 }

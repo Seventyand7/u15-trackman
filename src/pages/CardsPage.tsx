@@ -28,6 +28,8 @@ export default function CardsPage() {
   const [busy, setBusy] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [flash, setFlash] = useState<string | null>(null)
+  /** 打包時的進度，例如 2/4——一張圖卡要壓一秒多，沒有進度會以為當掉了 */
+  const [progress, setProgress] = useState<string | null>(null)
 
   // 第一次載到資料時跳到最近有比賽的日子
   const initialised = useRef(false)
@@ -73,6 +75,7 @@ export default function CardsPage() {
       setActionError((e as Error).message)
     } finally {
       setBusy(null)
+      setProgress(null)
     }
   }
 
@@ -101,7 +104,8 @@ export default function CardsPage() {
   async function downloadAll() {
     await run('zip', async () => {
       const files: { name: string; blob: Blob }[] = []
-      for (const g of dayGames) {
+      for (const [i, g] of dayGames.entries()) {
+        setProgress(`${i + 1}/${dayGames.length}`)
         files.push({ name: singleCardFilename(g, teams), blob: await nodeToPngBlob(nodeFor(g.id)) })
       }
       await zipBlobs(files, zipFilename(date))
@@ -172,7 +176,7 @@ export default function CardsPage() {
             onClick={() => void downloadAll()}
             disabled={dayGames.length === 0 || busy !== null}
           >
-            {busy === 'zip' ? '打包中…' : '全部下載（ZIP）'}
+            {busy === 'zip' ? `打包中 ${progress ?? ''}` : '全部下載（ZIP）'}
           </button>
           <button
             type="button"
