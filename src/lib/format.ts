@@ -115,11 +115,30 @@ export function formatTeamPlayer(
   return `${t} ${formatPlayer(player)}`
 }
 
-/** '01. 閃電女孩 vs 諾娜' */
-export function formatGameTitle(game: Game, teams: readonly Team[]): string {
+/** '閃電女孩 vs 諾娜'——沒有場次序號，給記錄頁選比賽用。 */
+export function formatMatchup(game: Game, teams: readonly Team[]): string {
   const a = teams.find((t) => t.id === game.teamAId)?.name ?? '?'
   const b = teams.find((t) => t.id === game.teamBId)?.name ?? '?'
-  return `${formatOrder(game.order)}. ${a} vs ${b}`
+  return `${a} vs ${b}`
+}
+
+/** '01. 閃電女孩 vs 諾娜'——圖卡的場次標題列與檔名用。 */
+export function formatGameTitle(game: Game, teams: readonly Team[]): string {
+  return `${formatOrder(game.order)}. ${formatMatchup(game, teams)}`
+}
+
+/**
+ * 同一天有兩場對戰組合完全相同（雙重賽）時，只寫隊名分不出來，
+ * 這種情況才需要把場次序號顯示出來。
+ */
+export function needsOrderLabel(sameDayGames: readonly Game[]): boolean {
+  const keys = sameDayGames.map((g) => `${g.teamAId}|${g.teamBId}`)
+  return new Set(keys).size !== keys.length
+}
+
+/** 所有有比賽的日期，新的在前。 */
+export function gameDates(games: readonly Game[]): string[] {
+  return [...new Set(games.map((g) => g.date))].sort().reverse()
 }
 
 /** '2026.09.13（日） 01. 閃電女孩 vs 諾娜' */

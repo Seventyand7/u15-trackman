@@ -1,14 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSeason } from '../state/SeasonProvider'
-import {
-  compareGamesNewestFirst,
-  formatGameDate,
-  formatGameTitle,
-} from '../lib/format'
+import { compareGamesNewestFirst, formatGameDate, formatMatchup } from '../lib/format'
 import { Empty, ErrorBanner, Kbd, Spinner } from '../components/ui'
 import { EventForm } from './record/EventForm'
 import { EventTable } from './record/EventTable'
 import { SidePanel } from './record/SidePanel'
+import { GamePicker } from './record/GamePicker'
 import type { EventKind } from '../lib/ranking'
 
 const GAME_STORAGE_KEY = 'u15.currentGameId'
@@ -89,43 +86,31 @@ export default function RecordPage() {
     <div className="space-y-4">
       <ErrorBanner message={error} />
 
-      {/* 選比賽 */}
-      <div className="panel flex flex-wrap items-center gap-4 px-4 py-3">
-        <select
-          className="field max-w-md"
-          value={game?.id ?? ''}
-          onChange={(e) => selectGame(e.target.value)}
-          aria-label="選擇比賽"
-        >
-          {sortedGames.map((g) => (
-            <option key={g.id} value={g.id}>
-              {formatGameDate(g.date)} {formatGameTitle(g, teams)}
-            </option>
-          ))}
-        </select>
+      <GamePicker games={sortedGames} teams={teams} current={game} onSelect={selectGame} />
 
-        {game && (
+      {game && (
+        <div className="flex flex-wrap items-center gap-4 px-1">
           <h1 className="text-lg font-bold tracking-wide">
             <span className="text-slate-400">{formatGameDate(game.date)}</span>{' '}
-            <span className="text-amber1">{formatGameTitle(game, teams)}</span>
+            <span className="text-amber1">{formatMatchup(game, teams)}</span>
           </h1>
-        )}
 
-        {game?.youtubeUrl && (
-          <a
-            href={game.youtubeUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="btn-ghost !py-1.5 text-xs"
-          >
-            開啟 YouTube ↗
-          </a>
-        )}
+          {game.youtubeUrl && (
+            <a
+              href={game.youtubeUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="btn-ghost !py-1.5 text-xs"
+            >
+              開啟 YouTube ↗
+            </a>
+          )}
 
-        <span className="ml-auto text-xs text-slate-500">
-          <Kbd>Alt</Kbd>+<Kbd>1</Kbd> 投球　<Kbd>Alt</Kbd>+<Kbd>2</Kbd> 擊球
-        </span>
-      </div>
+          <span className="ml-auto text-xs text-slate-500">
+            <Kbd>Alt</Kbd>+<Kbd>1</Kbd> 投球　<Kbd>Alt</Kbd>+<Kbd>2</Kbd> 擊球
+          </span>
+        </div>
+      )}
 
       {!game || !teamA || !teamB ? (
         <Empty>這場比賽的隊伍資料不完整，請到「設定」檢查。</Empty>

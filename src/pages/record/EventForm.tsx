@@ -36,25 +36,32 @@ import { PlayerPicker, SameNameDecision, resolvePlayer } from './PlayerPicker'
 interface FieldSpec {
   key: string
   label: string
-  suffix?: string
-  placeholder?: string
+  /** 標籤旁的小灰字：單位或格式。不放在 placeholder，免得看起來像已經填過了。 */
+  hint?: string
   width: string
 }
 
+/**
+ * 所有數值欄共用的 placeholder。
+ * 刻意用一個破折號而不是範例數字——範例數字（135.2 之類的）
+ * 掃過去會誤以為那欄已經填了。破折號跟缺值的顯示方式一致，一看就知道是空的。
+ */
+const EMPTY_HINT = '—'
+
 const PITCH_FIELDS: FieldSpec[] = [
-  { key: 'speed', label: '球速', suffix: 'km/h', placeholder: '135.2', width: 'w-28' },
-  { key: 'spin', label: '轉速', suffix: '轉', placeholder: '2100', width: 'w-28' },
-  { key: 'axis', label: '轉軸', placeholder: '1:30', width: 'w-24' },
+  { key: 'speed', label: '球速', hint: 'km/h', width: 'w-28' },
+  { key: 'spin', label: '轉速', hint: '轉', width: 'w-28' },
+  { key: 'axis', label: '轉軸', hint: 'H:MM', width: 'w-24' },
   { key: 'hBreak', label: '水平位移', width: 'w-28' },
   { key: 'vBreak', label: '垂直位移', width: 'w-28' },
-  { key: 'videoTime', label: '時間碼', placeholder: '1:23:45', width: 'w-28' },
+  { key: 'videoTime', label: '時間碼', hint: '時:分:秒', width: 'w-28' },
 ]
 
 const BATTED_FIELDS: FieldSpec[] = [
-  { key: 'exitVelo', label: '擊球初速', suffix: 'km/h', placeholder: '118.3', width: 'w-28' },
-  { key: 'launchAngle', label: '仰角', suffix: '°', placeholder: '24.6', width: 'w-24' },
-  { key: 'distance', label: '擊球距離', suffix: 'm', placeholder: '49.95', width: 'w-28' },
-  { key: 'videoTime', label: '時間碼', placeholder: '1:23:45', width: 'w-28' },
+  { key: 'exitVelo', label: '擊球初速', hint: 'km/h', width: 'w-28' },
+  { key: 'launchAngle', label: '仰角', hint: '°', width: 'w-24' },
+  { key: 'distance', label: '擊球距離', hint: 'm', width: 'w-28' },
+  { key: 'videoTime', label: '時間碼', hint: '時:分:秒', width: 'w-28' },
 ]
 
 type Values = Record<string, string>
@@ -353,17 +360,17 @@ export function EventForm({
               <div key={f.key}>
                 <label className="label" htmlFor={`${kind}-${f.key}`}>
                   {f.label}
-                  {f.suffix && <span className="ml-1 normal-case text-slate-600">{f.suffix}</span>}
+                  {f.hint && <span className="ml-1 normal-case text-slate-600">{f.hint}</span>}
                 </label>
                 <input
                   ref={i === 0 ? firstValueRef : undefined}
                   id={`${kind}-${f.key}`}
-                  className={`field ${f.width} font-mono ${
+                  className={`field ${f.width} font-mono placeholder:text-slate-700 ${
                     warning ? 'border-amber-500/60 bg-amber-500/5' : ''
                   }`}
                   value={values[f.key] ?? ''}
                   onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
-                  placeholder={f.placeholder}
+                  placeholder={EMPTY_HINT}
                   autoComplete="off"
                 />
               </div>

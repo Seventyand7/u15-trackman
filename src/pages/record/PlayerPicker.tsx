@@ -55,10 +55,10 @@ export const PlayerPicker = forwardRef<HTMLInputElement, PlayerPickerProps>(
           <input
             ref={numberRef}
             id={`number-${seasonId}`}
-            className="field w-24 text-center text-lg font-semibold"
+            className="field w-24 text-center text-lg font-semibold placeholder:text-slate-700"
             value={number}
             onChange={(e) => onNumberChange(e.target.value)}
-            placeholder="00"
+            placeholder="—"
             autoComplete="off"
             disabled={teamId === null}
           />
@@ -95,7 +95,7 @@ export const PlayerPicker = forwardRef<HTMLInputElement, PlayerPickerProps>(
             <input
               ref={nameRef}
               id={`newname-${seasonId}`}
-              className="field w-40"
+              className="field w-40 placeholder:text-slate-600"
               value={newName}
               onChange={(e) => onNewNameChange(e.target.value)}
               placeholder={`${number.trim()} 號是誰？`}

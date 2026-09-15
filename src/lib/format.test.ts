@@ -6,12 +6,15 @@ import {
   formatDistance,
   formatGameDate,
   formatGameTitle,
+  formatMatchup,
   formatOrder,
   formatPlayer,
   formatSpeed,
   formatSpin,
   formatTeamPlayer,
   formatText,
+  gameDates,
+  needsOrderLabel,
   nextGameOrder,
   parseISODate,
 } from './format'
@@ -122,9 +125,14 @@ describe('名稱格式', () => {
     expect(formatPlayer(null)).toBe('-')
   })
 
-  it('場次標題', () => {
+  it('場次標題（圖卡與檔名用，含場次序號）', () => {
     expect(formatGameTitle(GAMES[0]!, teams)).toBe('01. 閃電女孩 vs 諾娜')
     expect(formatGameTitle(GAMES[1]!, teams)).toBe('02. 閃電女孩 vs 諾娜')
+  })
+
+  it('對戰組合（記錄頁選比賽用，不含場次序號）', () => {
+    expect(formatMatchup(GAMES[0]!, teams)).toBe('閃電女孩 vs 諾娜')
+    expect(formatMatchup(GAMES[1]!, teams)).toBe('閃電女孩 vs 諾娜')
   })
 
   it('找不到隊伍時用問號佔位，不會整頁壞掉', () => {
@@ -151,5 +159,34 @@ describe('nextGameOrder', () => {
   it('序號有跳號時接在最大值後面', () => {
     const gapped: Game[] = [{ ...GAMES[0]!, order: 5 }]
     expect(nextGameOrder(gapped, '2026-09-13')).toBe(6)
+  })
+})
+
+describe('needsOrderLabel — 什麼時候非顯示場次序號不可', () => {
+  it('一天只有一場時不需要', () => {
+    expect(needsOrderLabel([GAMES[0]!])).toBe(false)
+  })
+
+  it('同一天不同對戰組合時不需要，隊名就分得出來', () => {
+    const other: Game = { ...GAMES[1]!, teamAId: 'tC', teamBId: 'tD' }
+    expect(needsOrderLabel([GAMES[0]!, other])).toBe(false)
+  })
+
+  it('同一天同樣兩隊打兩場（雙重賽）時才需要', () => {
+    expect(needsOrderLabel([GAMES[0]!, GAMES[1]!])).toBe(true)
+  })
+
+  it('沒有比賽時不需要', () => {
+    expect(needsOrderLabel([])).toBe(false)
+  })
+})
+
+describe('gameDates', () => {
+  it('去重並由新到舊排序', () => {
+    expect(gameDates(GAMES)).toEqual(['2026-09-20', '2026-09-13'])
+  })
+
+  it('沒有比賽時是空陣列', () => {
+    expect(gameDates([])).toEqual([])
   })
 })
