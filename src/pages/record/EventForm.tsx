@@ -108,6 +108,7 @@ export interface EventFormProps {
   active: boolean
   onActivate: () => void
   shortcutLabel: string
+  onRequestMerge: (player: Player, teamId: Id) => void
 }
 
 export function EventForm({
@@ -118,6 +119,7 @@ export function EventForm({
   active,
   onActivate,
   shortcutLabel,
+  onRequestMerge,
 }: EventFormProps) {
   const { seasonId, players, pool, pitches, battedBalls } = useSeason()
   const fields = kind === 'pitch' ? PITCH_FIELDS : BATTED_FIELDS
@@ -351,6 +353,7 @@ export function EventForm({
           onNewNameChange={setNewName}
           resolved={resolved}
           onAdvance={() => firstValueRef.current?.focus()}
+          onRequestMerge={teamId ? (p) => onRequestMerge(p, teamId) : undefined}
         />
 
         {/* 數值欄 */}

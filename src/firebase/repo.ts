@@ -27,6 +27,7 @@ import {
   updateDoc,
   where,
   writeBatch,
+  type DocumentReference,
   type Unsubscribe,
 } from 'firebase/firestore'
 import { db } from './app'
@@ -42,6 +43,7 @@ import type {
 } from '../types/models'
 import type { NewBattedBall, NewPitch } from '../lib/validation'
 import type { CardConfig } from '../types/models'
+import type { SeasonBackup } from '../lib/backup'
 
 export const COLLECTIONS = {
   seasons: 'seasons',
@@ -59,6 +61,9 @@ function col(name: string) {
 function withId<T>(id: string, data: Record<string, unknown>): T {
   return { id, ...data } as T
 }
+
+/** Firestore 一個 batch 最多 500 個操作，留一點餘裕。 */
+const BATCH_LIMIT = 450
 
 // ---------------------------------------------------------------------------
 // 訂閱
@@ -198,9 +203,6 @@ export async function deleteBattedBall(id: Id): Promise<void> {
 // ---------------------------------------------------------------------------
 // 合併球員
 
-/** Firestore 一個 batch 最多 500 個操作，留一點餘裕。 */
-const BATCH_LIMIT = 450
-
 /**
  * 執行合併：所有事件的 playerId 改到保留者身上、更新保留者的背號姓名、刪掉另一筆。
  * 超過 batch 上限就分批；刪除球員一定放在最後一批，
@@ -228,6 +230,146 @@ export async function applyMerge(plan: MergePlan): Promise<void> {
   })
   finalBatch.delete(doc(db(), COLLECTIONS.players, plan.remove.id))
   await finalBatch.commit()
+}
+
+// ---------------------------------------------------------------------------
+// 批次新增球員（資料管理頁的貼上名單）
+
+export async function createPlayersBatch(inputs: readonly NewPlayerInput[]): Promise<number> {
+  const now = Date.now()
+  let written = 0
+  for (let i = 0; i < inputs.length; i += BATCH_LIMIT) {
+    const batch = writeBatch(db())
+    for (const input of inputs.slice(i, i + BATCH_LIMIT)) {
+      batch.set(doc(col(COLLECTIONS.players)), {
+        seasonId: input.seasonId,
+        teamId: input.teamId,
+        number: input.number.trim(),
+        name: input.name.trim(),
+        createdAt: now,
+        updatedAt: now,
+      })
+      written += 1
+    }
+    await batch.commit()
+  }
+  return written
+}
+
+// ---------------------------------------------------------------------------
+// 匯入整季備份
+//
+// 一律建立「新的一季」，所有 id 重新產生後把關聯重新對應。
+// 不覆蓋任何現有資料——備份還原最怕的就是拿舊檔蓋掉新資料。
+
+export interface ImportProgress {
+  done: number
+  total: number
+}
+
+export async function importSeasonAsNew(
+  backup: SeasonBackup,
+  seasonName: string,
+  onProgress?: (p: ImportProgress) => void,
+): Promise<Id> {
+  const now = Date.now()
+  const seasonId = await createSeason(seasonName)
+
+  // 舊 id → 新 id。隊伍、球員、比賽要先配好，事件才對應得過去。
+  const teamIds = new Map<Id, Id>()
+  const playerIds = new Map<Id, Id>()
+  const gameIds = new Map<Id, Id>()
+
+  type Write = { ref: DocumentReference; data: Record<string, unknown> }
+  const writes: Write[] = []
+
+  function plan(collectionName: string, oldId: Id, ids: Map<Id, Id>): DocumentReference {
+    const ref = doc(col(collectionName))
+    ids.set(oldId, ref.id)
+    return ref
+  }
+
+  for (const t of backup.teams) {
+    writes.push({
+      ref: plan(COLLECTIONS.teams, t.id, teamIds),
+      data: { seasonId, name: t.name },
+    })
+  }
+
+  for (const p of backup.players) {
+    writes.push({
+      ref: plan(COLLECTIONS.players, p.id, playerIds),
+      data: {
+        seasonId,
+        teamId: teamIds.get(p.teamId) ?? '',
+        number: p.number,
+        name: p.name,
+        createdAt: p.createdAt || now,
+        updatedAt: now,
+      },
+    })
+  }
+
+  for (const g of backup.games) {
+    writes.push({
+      ref: plan(COLLECTIONS.games, g.id, gameIds),
+      data: {
+        seasonId,
+        date: g.date,
+        order: g.order,
+        teamAId: teamIds.get(g.teamAId) ?? '',
+        teamBId: teamIds.get(g.teamBId) ?? '',
+        youtubeUrl: g.youtubeUrl,
+      },
+    })
+  }
+
+  const remap = (e: { teamId: Id; playerId: Id; gameId: Id }) => ({
+    seasonId,
+    teamId: teamIds.get(e.teamId) ?? '',
+    playerId: playerIds.get(e.playerId) ?? '',
+    gameId: gameIds.get(e.gameId) ?? '',
+  })
+
+  for (const e of backup.pitches) {
+    writes.push({
+      ref: doc(col(COLLECTIONS.pitches)),
+      data: {
+        ...remap(e),
+        speed: e.speed,
+        spin: e.spin,
+        axis: e.axis,
+        hBreak: e.hBreak,
+        vBreak: e.vBreak,
+        videoTime: e.videoTime,
+        createdAt: e.createdAt || now,
+      },
+    })
+  }
+
+  for (const e of backup.battedBalls) {
+    writes.push({
+      ref: doc(col(COLLECTIONS.battedBalls)),
+      data: {
+        ...remap(e),
+        exitVelo: e.exitVelo,
+        launchAngle: e.launchAngle,
+        distance: e.distance,
+        videoTime: e.videoTime,
+        createdAt: e.createdAt || now,
+      },
+    })
+  }
+
+  for (let i = 0; i < writes.length; i += BATCH_LIMIT) {
+    const batch = writeBatch(db())
+    const chunk = writes.slice(i, i + BATCH_LIMIT)
+    for (const w of chunk) batch.set(w.ref, w.data)
+    await batch.commit()
+    onProgress?.({ done: Math.min(i + chunk.length, writes.length), total: writes.length })
+  }
+
+  return seasonId
 }
 
 // ---------------------------------------------------------------------------

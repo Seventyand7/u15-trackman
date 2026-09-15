@@ -6,7 +6,9 @@ import { EventForm } from './record/EventForm'
 import { EventTable } from './record/EventTable'
 import { SidePanel } from './record/SidePanel'
 import { GamePicker } from './record/GamePicker'
+import { MergePlayersPanel } from '../components/MergePlayersPanel'
 import type { EventKind } from '../lib/ranking'
+import type { Id, Player } from '../types/models'
 
 const GAME_STORAGE_KEY = 'u15.currentGameId'
 
@@ -21,6 +23,9 @@ export default function RecordPage() {
     }
   })
   const [activePanel, setActivePanel] = useState<EventKind>('pitch')
+  /** 從球員編輯選單進來的合併 */
+  const [merge, setMerge] = useState<{ teamId: Id; keepId: Id } | null>(null)
+  const [mergeFlash, setMergeFlash] = useState<string | null>(null)
 
   const sortedGames = useMemo(() => [...games].sort(compareGamesNewestFirst), [games])
   const game = sortedGames.find((g) => g.id === gameId) ?? null
@@ -57,6 +62,11 @@ export default function RecordPage() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
+
+  function requestMerge(player: Player, teamId: Id) {
+    setMerge({ teamId, keepId: player.id })
+    setMergeFlash(null)
+  }
 
   function selectGame(id: string) {
     setGameId(id)
@@ -112,6 +122,24 @@ export default function RecordPage() {
         </div>
       )}
 
+      {mergeFlash && (
+        <p className="animate-pop-in rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-300">
+          {mergeFlash}
+        </p>
+      )}
+
+      {merge && (
+        <MergePlayersPanel
+          teamId={merge.teamId}
+          initialKeepId={merge.keepId}
+          onDone={(m) => {
+            setMergeFlash(m)
+            setMerge(null)
+          }}
+          onCancel={() => setMerge(null)}
+        />
+      )}
+
       {!game || !teamA || !teamB ? (
         <Empty>這場比賽的隊伍資料不完整，請到「設定」檢查。</Empty>
       ) : (
@@ -126,6 +154,7 @@ export default function RecordPage() {
                 active={activePanel === 'pitch'}
                 onActivate={() => setActivePanel('pitch')}
                 shortcutLabel="Alt+1"
+                onRequestMerge={requestMerge}
               />
               <EventForm
                 kind="battedBall"
@@ -135,6 +164,7 @@ export default function RecordPage() {
                 active={activePanel === 'battedBall'}
                 onActivate={() => setActivePanel('battedBall')}
                 shortcutLabel="Alt+2"
+                onRequestMerge={requestMerge}
               />
             </div>
 

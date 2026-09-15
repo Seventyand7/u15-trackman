@@ -20,6 +20,8 @@ import type { Id, Player } from '../../types/models'
 import { Kbd } from '../../components/ui'
 
 export interface PlayerPickerProps {
+  /** 點「合併球員」時交給記錄頁開面板 */
+  onRequestMerge?: (player: Player) => void
   seasonId: Id
   teamId: Id | null
   number: string
@@ -34,7 +36,7 @@ export interface PlayerPickerProps {
 
 export const PlayerPicker = forwardRef<HTMLInputElement, PlayerPickerProps>(
   function PlayerPicker(props, numberRef) {
-    const { seasonId, teamId, number, onNumberChange, newName, onNewNameChange, resolved } = props
+    const { seasonId, teamId, number, onNumberChange, newName, onNewNameChange, resolved, onRequestMerge } = props
     const { players, pitches, battedBalls } = useSeason()
     const [editing, setEditing] = useState(false)
     const nameRef = useRef<HTMLInputElement>(null)
@@ -84,6 +86,9 @@ export const PlayerPicker = forwardRef<HTMLInputElement, PlayerPickerProps>(
             players={players}
             eventCount={countPlayerEvents(resolved.id, pitches, battedBalls).total}
             onDone={() => setEditing(false)}
+            onRequestMerge={
+              onRequestMerge ? () => { setEditing(false); onRequestMerge(resolved) } : undefined
+            }
           />
         )}
 
@@ -115,11 +120,13 @@ function PlayerEditForm({
   players,
   eventCount,
   onDone,
+  onRequestMerge,
 }: {
   player: Player
   players: readonly Player[]
   eventCount: number
   onDone: () => void
+  onRequestMerge?: () => void
 }) {
   const [number, setNumber] = useState(player.number)
   const [name, setName] = useState(player.name)
@@ -200,6 +207,16 @@ function PlayerEditForm({
         <button type="button" className="btn-ghost !py-1.5 text-xs" onClick={onDone}>
           取消
         </button>
+        {onRequestMerge && (
+          <button
+            type="button"
+            className="btn-ghost !py-1.5 text-xs"
+            onClick={onRequestMerge}
+            title="這一筆其實跟另一位球員是同一個人時用這個"
+          >
+            合併球員…
+          </button>
+        )}
       </div>
 
       <p className="mt-2 text-xs text-slate-400">

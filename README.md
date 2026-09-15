@@ -8,6 +8,8 @@
 
 ## 目前進度
 
+六個階段全部完成。
+
 | 階段 | 內容 | 狀態 |
 |---|---|---|
 | 1 | 專案骨架、Firebase 連線、Google 登入與白名單、Security Rules、GitHub Actions 部署 | ✅ 完成 |
@@ -15,7 +17,7 @@
 | 3 | 設定頁、記錄頁 | ✅ 完成 |
 | 4 | 圖卡輸出頁 ← 到這裡就能開始每週使用 | ✅ 完成 |
 | 5 | 季排名頁、CSV | ✅ 完成 |
-| 6 | 資料管理頁 | 待做 |
+| 6 | 資料管理頁 | ✅ 完成 |
 
 ---
 
@@ -168,6 +170,16 @@ allow read, write: if request.auth != null
   匯出就會卡住直到切回來。`src/lib/exportImage.ts` 改用 `toSvg` 再自己轉 canvas，
   只需要 `decode()`，跟分頁在不在前景無關。
 
+## 備份與還原
+
+資料管理頁可以把整季匯出成 JSON，也可以把備份檔匯入回來。
+
+**匯入一律建立「新的一季」**，把所有 id 重新對應過，不覆蓋任何現有資料。
+備份還原最怕的就是拿舊檔蓋掉新資料，所以這裡不給覆蓋這個選項——
+還原完兩季並存，比對確認過再把不要的那一季刪掉就好。
+
+建議每次記錄完一天的比賽就匯出一份，檔案很小（幾千筆也才幾百 KB）。
+
 ## 專案結構
 
 ```
@@ -189,6 +201,9 @@ src/
   components/card/cardParts.tsx  圖卡共用版型零件（單場與季排名共用）
   components/card/             GameCard／RankingCard／欄位勾選面板
   lib/csv.ts                   季排名 CSV（帶 BOM，Excel 開中文才不會亂碼）
+  lib/roster.ts                批次貼上名單的解析與衝突偵測
+  lib/backup.ts                整季 JSON 備份的格式與驗證
+  components/MergePlayersPanel.tsx  合併球員（記錄頁與資料管理頁共用）
   state/SeasonProvider.tsx     目前球季的全部資料（訂閱 Firestore，排名在前端算）
   firebase/repo.ts             唯一直接碰 Firestore 的地方
   types/                       資料模型型別
