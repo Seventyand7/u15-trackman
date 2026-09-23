@@ -33,7 +33,7 @@ import type { Game, Id, Player, Team } from '../../types/models'
 import { Kbd } from '../../components/ui'
 import { PlayerPicker, SameNameDecision, resolvePlayer } from './PlayerPicker'
 import { VideoTimeInput } from '../../components/VideoTimeInput'
-import { PlayerTargets } from './PlayerTargets'
+import { RecordTargets } from './RecordTargets'
 
 interface FieldSpec {
   key: string
@@ -216,12 +216,7 @@ export function EventForm({
         } else {
           await createBattedBall(buildBattedBall(asBattedInput(values), refs))
         }
-        const won = impacts.filter((i) => i.isGameBest || i.seasonRank !== null)
-        setFlash(
-          won.length > 0
-            ? `已記錄 ⭐ ${won.map((i) => i.label).join('、')}`
-            : '已記錄',
-        )
+        setFlash(describeImpacts(impacts))
         clearValues()
         setPending(null)
         // 保留隊伍與背號，游標回到第一個數值欄（同一位投手連續記錄）
@@ -357,9 +352,17 @@ export function EventForm({
           onRequestMerge={teamId ? (p) => onRequestMerge(p, teamId) : undefined}
         />
 
-        {/* 選到球員就顯示這球要贏過多少，不用等輸入數值 */}
-        {resolved && teamId && (
-          <PlayerTargets kind={kind} gameId={game.id} teamId={teamId} playerId={resolved.id} />
+        {/*
+          選好隊伍就顯示這球要贏過多少，不用等輸入數值，也不用等確認是誰——
+          數據先出來、人還沒看清楚的情況很常見。
+        */}
+        {teamId && (
+          <RecordTargets
+            kind={kind}
+            gameId={game.id}
+            teamId={teamId}
+            playerId={resolved?.id ?? null}
+          />
         )}
 
         {/* 數值欄 */}
@@ -466,20 +469,24 @@ export function EventForm({
           />
         )}
 
-        <div className="flex items-center gap-3 border-t border-white/5 pt-3">
-          <button type="submit" className="btn-primary" disabled={saving}>
-            {saving ? '寫入中…' : '送出'}
-          </button>
-          <button type="button" className="btn-ghost" onClick={clearAll}>
-            清空
-          </button>
-          <span className="text-[13px] text-slate-400">
-            <Kbd>Enter</Kbd> 送出 <Kbd>Esc</Kbd> 清空 <Kbd>Tab</Kbd> 下一欄
-          </span>
-          {flash && (
-            <span key={flash} className="ml-auto animate-pop-in text-[13px] font-medium text-emerald-300">
-              {flash}
+        <div className="border-t border-white/5 pt-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <button type="submit" className="btn-primary shrink-0" disabled={saving}>
+              {saving ? '寫入中…' : '送出'}
+            </button>
+            <button type="button" className="btn-ghost shrink-0" onClick={clearAll}>
+              清空
+            </button>
+            <span className="text-[13px] text-slate-400">
+              <Kbd>Enter</Kbd> 送出 <Kbd>Esc</Kbd> 清空 <Kbd>Tab</Kbd> 下一欄
             </span>
+          </div>
+
+          {/* 送出後的回報放自己一行：跟按鈕同一行的話，文字一長就會把按鈕擠到換行 */}
+          {flash && (
+            <p key={flash} className="mt-2 animate-pop-in text-[13px] font-medium text-emerald-300">
+              {flash}
+            </p>
           )}
         </div>
       </div>
@@ -488,6 +495,25 @@ export function EventForm({
 }
 
 // ---------------------------------------------------------------------------
+
+/**
+ * 送出後告訴我這筆贏到了什麼。
+ *
+ * 原本只寫「已記錄 ⭐ 最快轉速」，看不出來是本場最佳還是進了季排名。
+ * 兩件事分開講，不要每個項目各寫一句——球速與轉速常常同時贏，逐項寫會變成重複的長句。
+ */
+function describeImpacts(impacts: readonly DraftImpact[]): string {
+  const gameBest = impacts.filter((i) => i.isGameBest).map((i) => i.label)
+  const season = impacts
+    .filter((i) => i.seasonRank !== null)
+    .map((i) => `${i.label} 第 ${i.seasonRank}`)
+
+  const parts: string[] = []
+  if (gameBest.length > 0) parts.push(`本場最佳：${gameBest.join('、')}`)
+  if (season.length > 0) parts.push(`季排名：${season.join('、')}`)
+
+  return parts.length > 0 ? `已記錄 ⭐ ${parts.join('　')}` : '已記錄'
+}
 
 function ImpactBadge({ impact, teamName }: { impact: DraftImpact; teamName: string }) {
   const parts: string[] = []

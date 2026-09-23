@@ -1,15 +1,18 @@
 /**
- * 選到球員後顯示的四個參考數值，回答「這一球要不要記」。
+ * 回答「這一球要不要記」的參考數值。
  *
- * 上面兩列是這位球員自己的成績，下面兩列是要贏過的目標：
+ * 分兩種狀態：
  *
- *   本場個人 / 本季個人   他現在的水準在哪。換上第二位投手時，
- *                        他的球沒破全場紀錄還是要記——季前三名是各隊各算的，
- *                        所以要看得到他自己的數字，不是只看到全場第一名。
- *   季前三門檻           贏過這個，該隊的季前三名才會變動（見 seasonTargetForPlayer）
- *   本場最佳             贏過這個，才會取代單場圖卡上那一筆（兩隊合併後的第一名）
+ * 只選了隊伍（打者還沒上來、或還沒看清楚背號）
+ *   顯示這一隊的季前三門檻與本場最佳。數據先出來、人還沒確定的情況很常見，
+ *   這時候就要能先判斷這球值不值得記，再回頭去看是誰。
  *
- * 選到球員的當下就顯示，不用等輸入數值——決定要不要記是在看回放的當下做的。
+ * 已經選到球員
+ *   多顯示他自己的本場與本季最佳。換上第二位投手時，他的球沒破全場紀錄還是要記——
+ *   季前三名是各隊各算的，所以要看得到他自己的水準在哪。
+ *   季前三門檻這時候也換成針對他的（見 seasonTargetForPlayer）。
+ *
+ * 上面幾列是「現況」，下面兩列是「要贏過的目標」，用琥珀色與 ▸ 區隔。
  */
 
 import { useMemo } from 'react'
@@ -20,6 +23,7 @@ import {
   playerGameBests,
   playerSeasonBests,
   seasonTargetForPlayer,
+  teamThresholds,
   type EventKind,
   type RankCategory,
 } from '../../lib/ranking'
@@ -33,14 +37,13 @@ const CATEGORIES: Record<EventKind, RankCategory[]> = {
 
 interface Row {
   label: string
-  /** 要贏過的目標（下面兩列）用不同顏色跟自己的成績分開 */
+  /** 要贏過的目標用琥珀色，跟「現況」分開 */
   isTarget: boolean
   values: (number | null)[]
-  /** 沒有值的時候顯示什麼 */
   emptyText: string
 }
 
-export function PlayerTargets({
+export function RecordTargets({
   kind,
   gameId,
   teamId,
@@ -49,12 +52,36 @@ export function PlayerTargets({
   kind: EventKind
   gameId: Id
   teamId: Id
-  playerId: Id
+  /** 還沒選到球員時是 null，這時候顯示隊伍層級的門檻 */
+  playerId: Id | null
 }) {
   const { pool } = useSeason()
   const categories = CATEGORIES[kind]
 
   const rows = useMemo<Row[]>(() => {
+    const teamCutoffs = teamThresholds(pool, teamId)
+
+    const targets: Row[] = [
+      {
+        label: '季前三門檻',
+        isTarget: true,
+        values: categories.map((c) => {
+          if (playerId) return seasonTargetForPlayer(pool, teamId, playerId, c)
+          const t = teamCutoffs[c]
+          return t.kind === 'cutoff' ? t.entry.primary : null
+        }),
+        emptyText: '都記',
+      },
+      {
+        label: '本場最佳',
+        isTarget: true,
+        values: categories.map((c) => gameTarget(pool, gameId, c)),
+        emptyText: '都記',
+      },
+    ]
+
+    if (!playerId) return targets
+
     const ownGame = playerGameBests(pool, gameId, playerId)
     const ownSeason = playerSeasonBests(pool, playerId)
     return [
@@ -70,27 +97,17 @@ export function PlayerTargets({
         values: categories.map((c) => ownSeason[c]?.primary ?? null),
         emptyText: '還沒有',
       },
-      {
-        label: '季前三門檻',
-        isTarget: true,
-        values: categories.map((c) => seasonTargetForPlayer(pool, teamId, playerId, c)),
-        emptyText: '都記',
-      },
-      {
-        label: '本場最佳',
-        isTarget: true,
-        values: categories.map((c) => gameTarget(pool, gameId, c)),
-        emptyText: '都記',
-      },
+      ...targets,
     ]
   }, [pool, gameId, teamId, playerId, categories])
 
-  const gridCols = `7.5rem repeat(${categories.length}, minmax(0, 1fr))`
-
   return (
     <div className="rounded-lg border border-white/10 bg-night-900/60 px-3 py-2.5">
-      <div className="grid items-center gap-x-3 gap-y-1.5" style={{ gridTemplateColumns: gridCols }}>
-        <span />
+      <div
+        className="grid items-center gap-x-3 gap-y-1.5"
+        style={{ gridTemplateColumns: `7.5rem repeat(${categories.length}, minmax(0, 1fr))` }}
+      >
+        <span className="text-[12px] text-slate-500">{playerId ? '這位球員' : '這一隊'}</span>
         {categories.map((c) => (
           <span key={c} className="text-center text-[13px] font-medium text-slate-300">
             {CATEGORY_META[c].label.replace('最快', '').replace('最遠', '')}
@@ -98,14 +115,14 @@ export function PlayerTargets({
         ))}
 
         {rows.map((row) => (
-          <Row key={row.label} row={row} categories={categories} />
+          <TargetRow key={row.label} row={row} categories={categories} />
         ))}
       </div>
     </div>
   )
 }
 
-function Row({ row, categories }: { row: Row; categories: RankCategory[] }) {
+function TargetRow({ row, categories }: { row: Row; categories: RankCategory[] }) {
   return (
     <>
       <span
