@@ -6,6 +6,7 @@ import { EventForm } from './record/EventForm'
 import { EventTable } from './record/EventTable'
 import { SidePanel } from './record/SidePanel'
 import { GamePicker } from './record/GamePicker'
+import { HowTo } from './record/HowTo'
 import { MergePlayersPanel } from '../components/MergePlayersPanel'
 import type { EventKind } from '../lib/ranking'
 import type { Id, Player } from '../types/models'
@@ -95,6 +96,8 @@ export default function RecordPage() {
   return (
     <div className="space-y-4">
       <ErrorBanner message={error} />
+
+      <HowTo />
 
       <GamePicker games={sortedGames} teams={teams} current={game} onSelect={selectGame} />
 

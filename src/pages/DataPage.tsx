@@ -37,6 +37,21 @@ export default function DataPage() {
 
   return (
     <div className="space-y-6">
+      {/*
+        這一頁完全跟著「設定」選的球季走，但頁面上原本沒寫現在是哪一季，
+        看到一半很容易忘記自己在編哪一季的名單。
+      */}
+      <div className="panel flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">
+        <span className="text-[13px] text-slate-400">目前球季</span>
+        <span className="text-lg font-bold text-amber1">{season.season?.name ?? '—'}</span>
+        <span className="text-[13px] text-slate-400">
+          · {season.teams.length} 隊 · {season.players.length} 位球員
+        </span>
+        <span className="text-[13px] text-slate-500">
+          這一頁只會顯示這一季的資料。要編別季請先到「設定」切換球季。
+        </span>
+      </div>
+
       <ErrorBanner message={season.error ?? actionError} />
       {flash && (
         <p className="animate-pop-in rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-300">
@@ -82,7 +97,7 @@ function RosterSection({ onFlash, onError }: { onFlash: Notify; onError: Notify 
             title={team.name}
             right={
               <span className="flex items-center gap-2">
-                <span className="text-xs text-slate-500">{roster.length} 位</span>
+                <span className="text-[13px] text-slate-400">{roster.length} 位</span>
                 <button
                   type="button"
                   className="btn-ghost !py-1 text-xs"
@@ -280,22 +295,22 @@ function PlayerRow({
           >
             取消
           </button>
-          <span className="pb-2 text-xs text-slate-500">
+          <span className="pb-2 text-[13px] text-slate-400">
             將同步更新 {events.total} 筆紀錄　<Kbd>Enter</Kbd> 儲存 <Kbd>Esc</Kbd> 取消
           </span>
         </div>
-        {rowError && <p className="mt-1 text-xs text-red-300">{rowError}</p>}
+        {rowError && <p className="mt-1 text-[13px] text-red-300">{rowError}</p>}
       </li>
     )
   }
 
   return (
-    <li className="flex flex-wrap items-center gap-3 py-2.5 text-sm">
-      <span className="w-12 shrink-0 text-center font-mono font-semibold text-amber1">
+    <li className="flex flex-wrap items-center gap-3 py-3 text-[15px]">
+      <span className="w-14 shrink-0 text-center font-mono text-base font-bold text-amber1">
         {player.number}
       </span>
       <span className="font-medium">{player.name}</span>
-      <span className="text-xs text-slate-500">
+      <span className="text-[13px] text-slate-400">
         {events.total === 0 ? '尚無紀錄' : `${events.pitches} 投 · ${events.battedBalls} 擊`}
       </span>
       <div className="ml-auto flex gap-1">
@@ -369,21 +384,21 @@ function PastePanel({
         onChange={(e) => setText(e.target.value)}
         placeholder={'5 王小明\n15 李大同\n00 陳小華'}
       />
-      <p className="mt-1 text-xs text-slate-500">
+      <p className="mt-1.5 text-[13px] text-slate-400">
         分隔可以是空白、tab 或逗號。從 Excel 直接複製貼上也可以。
       </p>
 
       {plan.rows.length > 0 && (
         <div className="mt-3 max-h-64 overflow-y-auto rounded-lg border border-white/10">
-          <table className="w-full text-sm">
+          <table className="w-full text-[15px]">
             <tbody className="divide-y divide-white/5">
               {plan.rows.map((r) => (
                 <tr key={r.lineNo} className={r.willCreate ? '' : 'bg-red-500/5'}>
-                  <td className="w-10 py-1.5 pl-3 text-xs text-slate-600">{r.lineNo}</td>
-                  <td className="w-16 py-1.5 font-mono font-semibold">{r.number}</td>
-                  <td className="py-1.5">{r.name}</td>
+                  <td className="w-10 py-2 pl-3 text-[13px] text-slate-500">{r.lineNo}</td>
+                  <td className="w-16 py-2 font-mono font-semibold">{r.number}</td>
+                  <td className="py-2">{r.name}</td>
                   <td
-                    className={`py-1.5 pr-3 text-right text-xs ${
+                    className={`py-2 pr-3 text-right text-[13px] ${
                       r.status.kind === 'ok'
                         ? 'text-emerald-300'
                         : r.willCreate
@@ -415,7 +430,7 @@ function PastePanel({
           取消
         </button>
         {plan.blockedCount > 0 && (
-          <span className="text-xs text-red-300">{plan.blockedCount} 列被擋下，不會寫入</span>
+          <span className="text-[13px] text-red-300">{plan.blockedCount} 列被擋下，不會寫入</span>
         )}
       </div>
     </div>
@@ -496,7 +511,7 @@ function BackupSection({ onFlash, onError }: { onFlash: Notify; onError: Notify 
             if (f) void pickFile(f)
           }}
         />
-        <span className="text-xs text-slate-500">
+        <span className="text-[13px] text-slate-400">
           目前這一季：{teams.length} 隊 · {players.length} 位球員 · {games.length} 場 ·{' '}
           {pitches.length + battedBalls.length} 筆紀錄
         </span>
@@ -516,7 +531,7 @@ function BackupSection({ onFlash, onError }: { onFlash: Notify; onError: Notify 
           </p>
 
           {summary.orphanEvents > 0 && (
-            <p className="mt-2 text-xs text-amber-300">
+            <p className="mt-2 text-[13px] text-amber-300">
               ⚠️ 有 {summary.orphanEvents} 筆紀錄指向備份檔裡不存在的球員或比賽，匯入後會變成孤兒資料。
             </p>
           )}
@@ -551,7 +566,7 @@ function BackupSection({ onFlash, onError }: { onFlash: Notify; onError: Notify 
             </button>
           </div>
 
-          <p className="mt-3 text-xs text-slate-400">
+          <p className="mt-3 text-[13px] text-slate-400">
             匯入一律<span className="font-semibold text-slate-200">建立新的一季</span>
             ，現有的資料不會被動到。還原後兩季並存，比對確認過再把不要的那一季刪掉就好。
           </p>

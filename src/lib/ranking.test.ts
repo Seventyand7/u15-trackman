@@ -8,7 +8,9 @@ import {
   keepPersonalBest,
   playerGameBests,
   playerSeasonBests,
+  recordThreshold,
   seasonTargetForPlayer,
+  teamSeasonCutoff,
   teamGameBests,
   teamThresholds,
   teamTopEntries,
@@ -788,5 +790,97 @@ describe('playerGameBests / playerSeasonBests — 這位球員自己的成績', 
     expect([bests.pitchSpeed, bests.pitchSpin, bests.exitVelo, bests.distance]).toEqual([
       null, null, null, null,
     ])
+  })
+})
+
+describe('recordThreshold — 一個數字決定這球要不要記', () => {
+  const three = pool({
+    pitches: [
+      pitch('a', { playerId: 'p1', speed: 140 }),
+      pitch('b', { playerId: 'p2', speed: 135 }),
+      pitch('c', { playerId: 'p3', speed: 130 }),
+    ],
+  })
+
+  it('取季前三門檻與本場最佳較低的那個——超過任一個就有意義', () => {
+    // 季第三名 130、本場最佳 140 → 超過 130 就值得記
+    expect(recordThreshold(three, 'g1', TEAM_A, '新來的', 'pitchSpeed')).toBe(130)
+  })
+
+  it('球員已經在榜上時用他自己的成績當季門檻', () => {
+    // p1 自己 140、本場最佳也是 140 → 兩者都是 140
+    expect(recordThreshold(three, 'g1', TEAM_A, 'p1', 'pitchSpeed')).toBe(140)
+  })
+
+  it('本場最佳比季門檻低時改用本場最佳', () => {
+    const p = pool({
+      pitches: [
+        // 上一場留下的高標，本場只有一筆比較低的
+        pitch('prev1', { gameId: 'g3', playerId: 'p1', speed: 150 }),
+        pitch('prev2', { gameId: 'g3', playerId: 'p2', speed: 148 }),
+        pitch('prev3', { gameId: 'g3', playerId: 'p3', speed: 146 }),
+        pitch('now', { gameId: 'g1', playerId: 'p4', speed: 120 }),
+      ],
+    })
+    // 季第三 146、本場最佳 120 → 超過 120 就能破本場最佳
+    expect(recordThreshold(p, 'g1', TEAM_A, '新來的', 'pitchSpeed')).toBe(120)
+  })
+
+  it('該隊季排名還沒滿三人時怎樣都要記', () => {
+    const p = pool({
+      pitches: [
+        pitch('a', { playerId: 'p1', speed: 140 }),
+        pitch('b', { playerId: 'p2', speed: 135 }),
+      ],
+    })
+    expect(recordThreshold(p, 'g1', TEAM_A, '新來的', 'pitchSpeed')).toBeNull()
+  })
+
+  it('本場該項目還沒有資料時怎樣都要記', () => {
+    const p = pool({
+      pitches: [
+        pitch('a', { gameId: 'g3', playerId: 'p1', speed: 140 }),
+        pitch('b', { gameId: 'g3', playerId: 'p2', speed: 135 }),
+        pitch('c', { gameId: 'g3', playerId: 'p3', speed: 130 }),
+      ],
+    })
+    expect(recordThreshold(p, 'g1', TEAM_A, '新來的', 'pitchSpeed')).toBeNull()
+  })
+
+  it('還沒確認是誰時以新球員估算，用該隊第三名', () => {
+    expect(recordThreshold(three, 'g1', TEAM_A, null, 'pitchSpeed')).toBe(130)
+  })
+
+  it('完全沒資料時是 null', () => {
+    expect(recordThreshold(pool(), 'g1', TEAM_A, null, 'pitchSpeed')).toBeNull()
+  })
+})
+
+describe('teamSeasonCutoff', () => {
+  it('滿三人時回傳第三名的值', () => {
+    const p = pool({
+      pitches: [
+        pitch('a', { playerId: 'p1', speed: 140 }),
+        pitch('b', { playerId: 'p2', speed: 135 }),
+        pitch('c', { playerId: 'p3', speed: 130 }),
+      ],
+    })
+    expect(teamSeasonCutoff(p, TEAM_A, 'pitchSpeed')).toBe(130)
+  })
+
+  it('不足三人時是 null', () => {
+    const p = pool({ pitches: [pitch('a', { playerId: 'p1', speed: 140 })] })
+    expect(teamSeasonCutoff(p, TEAM_A, 'pitchSpeed')).toBeNull()
+  })
+
+  it('同一球員的多筆紀錄不會湊足三人', () => {
+    const p = pool({
+      pitches: [
+        pitch('a', { playerId: 'solo', speed: 140 }),
+        pitch('b', { playerId: 'solo', speed: 135 }),
+        pitch('c', { playerId: 'solo', speed: 130 }),
+      ],
+    })
+    expect(teamSeasonCutoff(p, TEAM_A, 'pitchSpeed')).toBeNull()
   })
 })

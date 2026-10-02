@@ -21,6 +21,8 @@ import {
   buildPitch,
   findDuplicateBattedBall,
   findDuplicatePitch,
+  formatAxisInput,
+  formatVideoTimeInput,
   pitchHasData,
   warnBatted,
   warnPitch,
@@ -32,7 +34,7 @@ import type { EventKind } from '../../lib/ranking'
 import type { Game, Id, Player, Team } from '../../types/models'
 import { Kbd } from '../../components/ui'
 import { PlayerPicker, SameNameDecision, resolvePlayer } from './PlayerPicker'
-import { VideoTimeInput } from '../../components/VideoTimeInput'
+import { AutoFormatInput } from '../../components/AutoFormatInput'
 import { RecordTargets } from './RecordTargets'
 
 interface FieldSpec {
@@ -53,7 +55,7 @@ const EMPTY_HINT = '—'
 const PITCH_FIELDS: FieldSpec[] = [
   { key: 'speed', label: '球速', hint: 'km/h', width: 'w-28' },
   { key: 'spin', label: '轉速', hint: '轉', width: 'w-28' },
-  { key: 'axis', label: '轉軸', hint: 'H:MM', width: 'w-24' },
+  { key: 'axis', label: '轉軸', hint: '只打數字', width: 'w-24' },
   { key: 'hBreak', label: '水平位移', width: 'w-28' },
   { key: 'vBreak', label: '垂直位移', width: 'w-28' },
   { key: 'videoTime', label: '時間碼', hint: '只打數字', width: 'w-28' },
@@ -65,6 +67,12 @@ const BATTED_FIELDS: FieldSpec[] = [
   { key: 'distance', label: '擊球距離', hint: 'm', width: 'w-28' },
   { key: 'videoTime', label: '時間碼', hint: '只打數字', width: 'w-28' },
 ]
+
+/** 會自動補冒號的欄位，值是把原始輸入整理成顯示樣子的函式 */
+const AUTO_FORMAT: Record<string, ((raw: string) => string) | undefined> = {
+  videoTime: formatVideoTimeInput,
+  axis: formatAxisInput,
+}
 
 type Values = Record<string, string>
 
@@ -372,17 +380,20 @@ export function EventForm({
             const cls = `field ${f.width} font-mono placeholder:text-slate-700 ${
               warning ? 'border-amber-500/60 bg-amber-500/5' : ''
             }`
+            // 只打數字、冒號自己長出來的兩個欄位
+            const autoFormat = AUTO_FORMAT[f.key]
             return (
               <div key={f.key}>
                 <label className="label" htmlFor={`${kind}-${f.key}`}>
                   {f.label}
                   {f.hint && <span className="ml-1 normal-case text-slate-600">{f.hint}</span>}
                 </label>
-                {f.key === 'videoTime' ? (
-                  <VideoTimeInput
+                {autoFormat ? (
+                  <AutoFormatInput
                     id={`${kind}-${f.key}`}
                     className={cls}
                     value={values[f.key] ?? ''}
+                    format={autoFormat}
                     onChange={(next) => setValues((v) => ({ ...v, [f.key]: next }))}
                     placeholder={EMPTY_HINT}
                   />
@@ -402,13 +413,9 @@ export function EventForm({
           })}
         </div>
 
-        {/* 即時提示 */}
-        {impacts.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {impacts.map((i) => (
-              <ImpactBadge key={i.category} impact={i} teamName={teams.find((t) => t.id === teamId)?.name ?? ''} />
-            ))}
-          </div>
+        {/* 輸入後直接給判決，不用自己跟上面的門檻比對 */}
+        {hasData && teamId && (
+          <Verdict impacts={impacts} teamName={teams.find((t) => t.id === teamId)?.name ?? ''} />
         )}
 
         {/* 警告（不擋送出） */}
@@ -515,17 +522,37 @@ function describeImpacts(impacts: readonly DraftImpact[]): string {
   return parts.length > 0 ? `已記錄 ⭐ ${parts.join('　')}` : '已記錄'
 }
 
-function ImpactBadge({ impact, teamName }: { impact: DraftImpact; teamName: string }) {
-  const parts: string[] = []
-  if (impact.isGameBest) parts.push(`⭐ 本場${impact.label}`)
-  if (impact.seasonRank !== null) {
-    // 這位球員本來就在前三 → 這筆是取代他自己那一筆，不是擠掉別人
-    const prefix = impact.replacesOwnEntry ? '刷新個人最佳，' : ''
-    parts.push(`${prefix}${teamName} 季第 ${impact.seasonRank} 名`)
+/**
+ * 這一球要不要記的判決。
+ *
+ * 之前只在「有破紀錄」時冒出徽章，沒冒出來到底是不值得記、還是我少打了什麼，
+ * 看不出來。改成一律給答案：要記就說為什麼，不用記也直接講。
+ */
+function Verdict({ impacts, teamName }: { impacts: readonly DraftImpact[]; teamName: string }) {
+  if (impacts.length === 0) {
+    return (
+      <div className="rounded-lg border border-white/10 bg-white/[0.03] px-4 py-2.5">
+        <span className="text-base font-semibold text-slate-400">— 可以略過</span>
+        <span className="ml-2 text-[13px] text-slate-500">
+          沒有超過本場最佳，也沒進季前三
+        </span>
+      </div>
+    )
   }
+
+  const reasons = impacts.flatMap((i) => {
+    const out: string[] = []
+    if (i.isGameBest) out.push(`本場${i.label}`)
+    if (i.seasonRank !== null) {
+      out.push(`${teamName} ${i.label} 季第 ${i.seasonRank} 名`)
+    }
+    return out
+  })
+
   return (
-    <span className="animate-record-glow rounded-lg border border-amber1/40 bg-amber1/15 px-3 py-1.5 text-[13px] font-semibold text-amber1">
-      {parts.join(' · ')}
-    </span>
+    <div className="animate-record-glow rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-4 py-2.5">
+      <span className="text-base font-bold text-emerald-300">✓ 要記</span>
+      <span className="ml-2 text-[13px] text-emerald-200/80">{reasons.join('　')}</span>
+    </div>
   )
 }

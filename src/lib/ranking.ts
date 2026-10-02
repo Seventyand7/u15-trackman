@@ -306,6 +306,17 @@ export function seasonTargetForPlayer(
   return Math.max(own.primary, cutoff.primary)
 }
 
+/** 該隊季前三名的門檻值（第三名那筆）。不足三人時是 null，代表怎樣都進得去。 */
+export function teamSeasonCutoff(
+  pool: EventPool,
+  teamId: Id,
+  category: RankCategory,
+  limit = 3,
+): number | null {
+  const best = keepPersonalBest(entriesFor(pool, category, { teamId }))
+  return best.length >= limit ? (best[limit - 1]?.primary ?? null) : null
+}
+
 /** 這一筆要超過多少才會成為本場該項目的最佳（兩隊合併）。null 代表本場還沒有資料。 */
 export function gameTarget(
   pool: EventPool,
@@ -351,6 +362,34 @@ export function teamThresholds(
 
 // ---------------------------------------------------------------------------
 // 送出前的即時提示
+
+/**
+ * 這一球超過多少就值得記下來。
+ *
+ * 記下來有兩種意義：上單場圖卡（破本場最佳），或進該隊季前三。
+ * 超過其中任何一個就有意義，所以門檻是兩者取低的那個——
+ * 一個數字就夠了，不用自己在腦袋裡比兩次。
+ *
+ * playerId 傳 null 代表還沒確認是誰（打者還沒上來、背號還沒看清楚），
+ * 這時候用該隊第三名當季排名門檻，也就是以「一位新球員」來估。
+ *
+ * null 代表怎樣都值得記（本場還沒資料，或該隊季排名還沒滿三人）。
+ */
+export function recordThreshold(
+  pool: EventPool,
+  gameId: Id,
+  teamId: Id,
+  playerId: Id | null,
+  category: RankCategory,
+  limit = 3,
+): number | null {
+  const season = playerId
+    ? seasonTargetForPlayer(pool, teamId, playerId, category, limit)
+    : teamSeasonCutoff(pool, teamId, category, limit)
+  const game = gameTarget(pool, gameId, category)
+  if (season === null || game === null) return null
+  return Math.min(season, game)
+}
 
 /** 草稿事件用的暫時 id，不會寫進 Firestore。 */
 export const DRAFT_EVENT_ID = '__draft__'

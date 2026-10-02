@@ -86,10 +86,10 @@ export function MergePlayersPanel({
 
   return (
     <div className="animate-pop-in rounded-lg border border-amber1/40 bg-amber1/5 p-4">
-      <h3 className="text-sm font-bold text-amber1">
+      <h3 className="text-[15px] font-bold text-amber1">
         合併球員 · {teamById(teamId)?.name}
       </h3>
-      <p className="mt-1 text-xs text-slate-400">
+      <p className="mt-1 text-[13px] text-slate-400">
         兩筆其實是同一個人時用這個。所有紀錄會搬到保留的那一筆身上，另一筆刪除。
       </p>
 

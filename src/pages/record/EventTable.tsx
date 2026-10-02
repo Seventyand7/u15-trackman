@@ -21,8 +21,8 @@ import {
   formatSpin,
   formatText,
 } from '../../lib/format'
-import { toNumber, toText } from '../../lib/validation'
-import { VideoTimeInput } from '../../components/VideoTimeInput'
+import { formatAxisInput, formatVideoTimeInput, toNumber, toText } from '../../lib/validation'
+import { AutoFormatInput } from '../../components/AutoFormatInput'
 import type { BattedBall, Game, Id, Pitch } from '../../types/models'
 import { Empty, Panel } from '../../components/ui'
 
@@ -165,23 +165,24 @@ function EditCell({
   onChange,
   onKeyDown,
   autoFocus,
-  videoTime,
+  autoFormat,
 }: {
   value: string
   onChange: (v: string) => void
   onKeyDown: (e: React.KeyboardEvent) => void
   autoFocus?: boolean
-  /** 時間碼欄要自動補冒號，而且游標要釘在最後（見 VideoTimeInput） */
-  videoTime?: boolean
+  /** 時間碼與轉軸要自動補冒號，而且游標要釘在最後（見 AutoFormatInput） */
+  autoFormat?: (raw: string) => string
 }) {
   const cls = 'field w-24 !py-1 font-mono text-[13px]'
   return (
     <td className="py-1.5 pr-3">
-      {videoTime ? (
-        <VideoTimeInput
+      {autoFormat ? (
+        <AutoFormatInput
           autoFocus={autoFocus}
           className={cls}
           value={value}
+          format={autoFormat}
           onChange={onChange}
           onKeyDown={onKeyDown}
         />
@@ -254,11 +255,16 @@ function PitchRow({ pitch }: { pitch: Pitch }) {
         <PlayerCell teamId={pitch.teamId} playerId={pitch.playerId} />
         <EditCell autoFocus value={draft.speed ?? ''} onChange={set('speed')} onKeyDown={onKeyDown} />
         <EditCell value={draft.spin ?? ''} onChange={set('spin')} onKeyDown={onKeyDown} />
-        <EditCell value={draft.axis ?? ''} onChange={set('axis')} onKeyDown={onKeyDown} />
+        <EditCell
+          autoFormat={formatAxisInput}
+          value={draft.axis ?? ''}
+          onChange={set('axis')}
+          onKeyDown={onKeyDown}
+        />
         <EditCell value={draft.hBreak ?? ''} onChange={set('hBreak')} onKeyDown={onKeyDown} />
         <EditCell value={draft.vBreak ?? ''} onChange={set('vBreak')} onKeyDown={onKeyDown} />
         <EditCell
-          videoTime
+          autoFormat={formatVideoTimeInput}
           value={draft.videoTime ?? ''}
           onChange={set('videoTime')}
           onKeyDown={onKeyDown}
@@ -359,7 +365,7 @@ function BattedRow({ ball }: { ball: BattedBall }) {
         />
         <EditCell value={draft.distance ?? ''} onChange={set('distance')} onKeyDown={onKeyDown} />
         <EditCell
-          videoTime
+          autoFormat={formatVideoTimeInput}
           value={draft.videoTime ?? ''}
           onChange={set('videoTime')}
           onKeyDown={onKeyDown}

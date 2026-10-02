@@ -86,6 +86,23 @@ export const AXIS_PATTERN = /^([1-9]|1[0-2]):[0-5][0-9]$/
  * 除非每次都把小時補成兩位（01:23:45），但我們的格式是 1:23:45。
  * 從右邊切就同時吃得下 mm:ss 與 h:mm:ss，不用先想這支影片有沒有超過一小時。
  */
+/**
+ * 轉軸輸入：只打數字，冒號自動長出來。
+ *   1    → 1
+ *   13   → 13
+ *   130  → 1:30
+ *   1245 → 12:45
+ *
+ * 跟時間碼一樣從右邊切，而且這裡完全沒有歧義：轉軸的分鐘一定是兩位數，
+ * 所以最後兩位必定是分、前面必定是時（1–12）。最多四位數。
+ * 時與分合不合理交給 warnPitch 警告，這裡只負責排版。
+ */
+export function formatAxisInput(raw: string): string {
+  const digits = raw.replace(/\D/g, '').slice(0, 4)
+  if (digits.length <= 2) return digits
+  return `${digits.slice(0, -2)}:${digits.slice(-2)}`
+}
+
 export function formatVideoTimeInput(raw: string): string {
   const digits = raw.replace(/\D/g, '').slice(0, 6)
   if (digits.length <= 2) return digits

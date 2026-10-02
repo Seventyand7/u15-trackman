@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#FFB020"/>
+  <text x="32" y="43" text-anchor="middle"
+        font-family="Segoe UI, system-ui, sans-serif" font-size="30" font-weight="700"
+        fill="#070B16">U15</text>
+</svg>

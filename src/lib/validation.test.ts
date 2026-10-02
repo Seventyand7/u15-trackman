@@ -4,6 +4,7 @@ import {
   EMPTY_PITCH_INPUT,
   battedHasData,
   buildBattedBall,
+  formatAxisInput,
   formatVideoTimeInput,
   buildPitch,
   findDuplicateBattedBall,
@@ -288,5 +289,40 @@ describe('formatVideoTimeInput — 時間碼只打數字，冒號自動長出來
     // '1:23:45' 按退格 → '1:23:4' → 剩 1234 → '12:34'
     expect(formatVideoTimeInput('1:23:4')).toBe('12:34')
     expect(formatVideoTimeInput('12:3')).toBe('1:23')
+  })
+})
+
+describe('formatAxisInput — 轉軸只打數字，冒號自動長出來', () => {
+  it('分鐘固定兩位，所以從右邊切不會有歧義', () => {
+    expect(formatAxisInput('1')).toBe('1')
+    expect(formatAxisInput('13')).toBe('13')
+    expect(formatAxisInput('130')).toBe('1:30')
+    expect(formatAxisInput('600')).toBe('6:00')
+    expect(formatAxisInput('1245')).toBe('12:45')
+    expect(formatAxisInput('1200')).toBe('12:00')
+  })
+
+  it('已經有冒號的輸入不會被重複加工', () => {
+    expect(formatAxisInput('1:30')).toBe('1:30')
+    expect(formatAxisInput('12:45')).toBe('12:45')
+  })
+
+  it('最多四位數，再打就不吃了', () => {
+    expect(formatAxisInput('12345')).toBe('12:34')
+  })
+
+  it('退格等於刪掉一位數字再重新分段', () => {
+    expect(formatAxisInput('12:4')).toBe('1:24')
+    expect(formatAxisInput('1:3')).toBe('13')
+  })
+
+  it('非數字一律忽略，清空就是空的', () => {
+    expect(formatAxisInput('abc')).toBe('')
+    expect(formatAxisInput('')).toBe('')
+  })
+
+  it('排版不管合不合理，時與分的範圍交給警告處理', () => {
+    expect(formatAxisInput('1399')).toBe('13:99')
+    expect(warnPitch(p({ axis: formatAxisInput('1399') })).map((w) => w.field)).toEqual(['axis'])
   })
 })

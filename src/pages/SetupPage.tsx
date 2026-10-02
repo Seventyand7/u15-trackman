@@ -170,7 +170,7 @@ function SeasonSection({ onRun }: { onRun: Run }) {
               className="field"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="2026 秋季"
+              placeholder="球季名稱"
             />
           </div>
           <button type="submit" className="btn-primary" disabled={!name.trim()}>
@@ -372,7 +372,7 @@ function TeamSection({ onRun }: { onRun: Run }) {
             className="field"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="閃電女孩"
+            placeholder="隊伍名稱"
           />
         </div>
         <button type="submit" className="btn-primary" disabled={!name.trim()}>
