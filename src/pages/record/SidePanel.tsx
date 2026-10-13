@@ -52,7 +52,7 @@ export function SidePanel({ game, teamA, teamB }: { game: Game; teamA: Team; tea
           ))}
         </div>
         <p className="mt-2.5 text-[11px] leading-relaxed text-slate-500">
-          琥珀色是兩隊合併後的本場第一，會上單場圖卡。
+          琥珀色為兩隊合併後的本場第一，將顯示於單場圖卡。
         </p>
       </Panel>
 
@@ -151,7 +151,7 @@ function ThresholdRow({ label, threshold }: { label: string; threshold: Threshol
       <span className="text-[13px] text-slate-300">{label}</span>
       {threshold.kind === 'open' ? (
         <span className="rounded bg-emerald-500/15 px-2 py-0.5 text-[13px] font-semibold text-emerald-300">
-          未滿 3 人，都記
+          未滿 3 人，全部記錄
         </span>
       ) : (
         <span className="font-mono text-lg font-bold tabular-nums text-slate-100">

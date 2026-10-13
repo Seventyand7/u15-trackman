@@ -90,7 +90,7 @@ export function GamePicker({
 
       <div className="flex flex-wrap items-center gap-2">
         {dayGames.length === 0 ? (
-          <span className="text-sm text-slate-500">這天沒有比賽</span>
+          <span className="text-sm text-slate-500">本日無比賽</span>
         ) : (
           dayGames.map((g) => {
             const selected = g.id === current?.id

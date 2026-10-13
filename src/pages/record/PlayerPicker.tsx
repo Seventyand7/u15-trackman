@@ -103,7 +103,7 @@ export const PlayerPicker = forwardRef<HTMLInputElement, PlayerPickerProps>(
               className="field w-40 placeholder:text-slate-600"
               value={newName}
               onChange={(e) => onNewNameChange(e.target.value)}
-              placeholder={`${number.trim()} 號是誰？`}
+              placeholder={`${number.trim()} 號球員姓名`}
               autoComplete="off"
             />
           </div>
@@ -136,7 +136,7 @@ function PlayerEditForm({
   async function save() {
     if (saving) return
     if (normalizeName(name) === '') {
-      setError('姓名不能空白')
+      setError('姓名不可空白')
       return
     }
     const conflict = findNumberConflict(
@@ -146,7 +146,7 @@ function PlayerEditForm({
       player.id,
     )
     if (conflict) {
-      setError(`背號 ${number.trim()} 已經被 ${conflict.name} 使用`)
+      setError(`背號 ${number.trim()} 已由 ${conflict.name} 使用`)
       return
     }
     setSaving(true)
@@ -212,7 +212,7 @@ function PlayerEditForm({
             type="button"
             className="btn-ghost !py-1.5 text-xs"
             onClick={onRequestMerge}
-            title="這一筆其實跟另一位球員是同一個人時用這個"
+            title="與另一位球員為同一人時使用"
           >
             合併球員…
           </button>
@@ -249,7 +249,7 @@ export function SameNameDecision({
   return (
     <div className="animate-pop-in rounded-lg border border-amber1/40 bg-amber1/10 p-4">
       <p className="text-sm font-semibold text-amber1">
-        要新增「{number} {name}」，但同隊已經有同名球員了——是同一個人嗎？
+        同隊已有同名球員，{number} {name} 是否為同一人？
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
         {candidates.map((c) => (
@@ -270,7 +270,7 @@ export function SameNameDecision({
         </button>
       </div>
       <p className="mt-2 text-[13px] text-slate-300">
-        選錯的話，之後可以在資料管理頁合併球員修正。
+        若選擇有誤，可於「資料管理」以合併球員修正。
       </p>
     </div>
   )

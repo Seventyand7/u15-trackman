@@ -84,6 +84,18 @@ export function formatText(v: string | null): string {
   return t === '' ? DASH : t
 }
 
+/**
+ * 水平／垂直位移。值是純文字（Trackman 畫面上看到什麼就記什麼），顯示時補上 cm。
+ *
+ * 已經寫了單位的就不再補，不然會變成「22 cm cm」——
+ * 這個欄位是自由輸入，之前記的資料可能已經帶了單位。
+ */
+export function formatBreak(v: string | null): string {
+  const t = v?.trim() ?? ''
+  if (t === '') return DASH
+  return /c\s*m\s*$/i.test(t) ? t : `${t} cm`
+}
+
 /** 某個排名項目的主數據該怎麼顯示（圖卡紅字的那個數字）。 */
 export function formatPrimary(category: RankCategory, value: number | null): string {
   switch (category) {

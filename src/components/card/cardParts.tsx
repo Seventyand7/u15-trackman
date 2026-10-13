@@ -10,6 +10,7 @@ import type { CSSProperties, ReactNode } from 'react'
 import {
   DASH,
   formatAngle,
+  formatBreak,
   formatDistance,
   formatSpeed,
   formatSpin,
@@ -76,9 +77,9 @@ export function fieldValue(entry: RankEntry, field: AnyField): string {
       case 'axis':
         return formatText(p.axis)
       case 'hBreak':
-        return formatText(p.hBreak)
+        return formatBreak(p.hBreak)
       case 'vBreak':
-        return formatText(p.vBreak)
+        return formatBreak(p.vBreak)
     }
   }
   const b = entry.event as BattedBall

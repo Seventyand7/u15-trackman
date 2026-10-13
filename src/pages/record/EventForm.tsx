@@ -55,17 +55,17 @@ const EMPTY_HINT = '—'
 const PITCH_FIELDS: FieldSpec[] = [
   { key: 'speed', label: '球速', hint: 'km/h', width: 'w-28' },
   { key: 'spin', label: '轉速', hint: '轉', width: 'w-28' },
-  { key: 'axis', label: '轉軸', hint: '只打數字', width: 'w-24' },
+  { key: 'axis', label: '轉軸', hint: '僅數字', width: 'w-24' },
   { key: 'hBreak', label: '水平位移', width: 'w-28' },
   { key: 'vBreak', label: '垂直位移', width: 'w-28' },
-  { key: 'videoTime', label: '時間碼', hint: '只打數字', width: 'w-28' },
+  { key: 'videoTime', label: '時間碼', hint: '僅數字', width: 'w-28' },
 ]
 
 const BATTED_FIELDS: FieldSpec[] = [
   { key: 'exitVelo', label: '擊球初速', hint: 'km/h', width: 'w-28' },
   { key: 'launchAngle', label: '仰角', hint: '°', width: 'w-24' },
   { key: 'distance', label: '擊球距離', hint: 'm', width: 'w-28' },
-  { key: 'videoTime', label: '時間碼', hint: '只打數字', width: 'w-28' },
+  { key: 'videoTime', label: '時間碼', hint: '僅數字', width: 'w-28' },
 ]
 
 /** 會自動補冒號的欄位，值是把原始輸入整理成顯示樣子的函式 */
@@ -254,7 +254,7 @@ export function EventForm({
       return
     }
     if (!hasData) {
-      setError('至少要有一個數據欄才能送出')
+      setError('至少需填寫一個數據欄位')
       firstValueRef.current?.focus()
       return
     }
@@ -267,7 +267,7 @@ export function EventForm({
     // 背號不存在 → 要新增球員
     const name = newName.trim()
     if (name === '') {
-      setError('這個背號還沒有球員，請輸入姓名')
+      setError('此背號尚無對應球員，請輸入姓名')
       return
     }
 
@@ -380,7 +380,7 @@ export function EventForm({
             const cls = `field ${f.width} font-mono placeholder:text-slate-700 ${
               warning ? 'border-amber-500/60 bg-amber-500/5' : ''
             }`
-            // 只打數字、冒號自己長出來的兩個欄位
+            // 只需輸入數字、冒號自動帶入的兩個欄位
             const autoFormat = AUTO_FORMAT[f.key]
             return (
               <div key={f.key}>
@@ -413,7 +413,7 @@ export function EventForm({
           })}
         </div>
 
-        {/* 輸入後直接給判決，不用自己跟上面的門檻比對 */}
+        {/* 輸入後直接判定有沒有達到門檻，不用自己跟上面的數字比對 */}
         {hasData && teamId && (
           <Verdict impacts={impacts} teamName={teams.find((t) => t.id === teamId)?.name ?? ''} />
         )}
@@ -431,7 +431,7 @@ export function EventForm({
 
         {duplicate && (
           <p className="rounded-lg border border-orange-500/30 bg-orange-500/10 px-3 py-2 text-[13px] text-orange-300">
-            ⚠️ 可能重複：這場已經有一筆同球員、數值完全相同的紀錄了
+            可能重複：本場已有同一球員且數值完全相同的紀錄
           </p>
         )}
 
@@ -506,7 +506,7 @@ export function EventForm({
 /**
  * 送出後告訴我這筆贏到了什麼。
  *
- * 原本只寫「已記錄 ⭐ 最快轉速」，看不出來是本場最佳還是進了季排名。
+ * 只寫項目名稱（例如「最快轉速」）看不出來是破了本場最佳還是進了季排名，所以兩件事都講。
  * 兩件事分開講，不要每個項目各寫一句——球速與轉速常常同時贏，逐項寫會變成重複的長句。
  */
 function describeImpacts(impacts: readonly DraftImpact[]): string {
@@ -519,22 +519,22 @@ function describeImpacts(impacts: readonly DraftImpact[]): string {
   if (gameBest.length > 0) parts.push(`本場最佳：${gameBest.join('、')}`)
   if (season.length > 0) parts.push(`季排名：${season.join('、')}`)
 
-  return parts.length > 0 ? `已記錄 ⭐ ${parts.join('　')}` : '已記錄'
+  return parts.length > 0 ? `已記錄　${parts.join('　')}` : '已記錄'
 }
 
 /**
- * 這一球要不要記的判決。
+ * 本筆有沒有達到記錄門檻。
  *
- * 之前只在「有破紀錄」時冒出徽章，沒冒出來到底是不值得記、還是我少打了什麼，
- * 看不出來。改成一律給答案：要記就說為什麼，不用記也直接講。
+ * 只在達標時才顯示的話，沒顯示會分不清是「真的沒達標」還是「我少填了什麼」，
+ * 所以兩種結果都明講：達標就列出原因，未達標也直接說。
  */
 function Verdict({ impacts, teamName }: { impacts: readonly DraftImpact[]; teamName: string }) {
   if (impacts.length === 0) {
     return (
       <div className="rounded-lg border border-white/10 bg-white/[0.03] px-4 py-2.5">
-        <span className="text-base font-semibold text-slate-400">— 可以略過</span>
+        <span className="text-base font-semibold text-slate-400">未達門檻</span>
         <span className="ml-2 text-[13px] text-slate-500">
-          沒有超過本場最佳，也沒進季前三
+          未超過本場最佳，亦未進入季前三名
         </span>
       </div>
     )
@@ -551,7 +551,7 @@ function Verdict({ impacts, teamName }: { impacts: readonly DraftImpact[]; teamN
 
   return (
     <div className="animate-record-glow rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-4 py-2.5">
-      <span className="text-base font-bold text-emerald-300">✓ 要記</span>
+      <span className="text-base font-bold text-emerald-300">達到門檻</span>
       <span className="ml-2 text-[13px] text-emerald-200/80">{reasons.join('　')}</span>
     </div>
   )

@@ -81,7 +81,7 @@ describe('warnPitch — 只警告不擋', () => {
   it('不是數字會警告，並說明那欄會留白', () => {
     const w = warnPitch(p({ speed: 'abc' }))
     expect(w[0]?.field).toBe('speed')
-    expect(w[0]?.message).toContain('留白')
+    expect(w[0]?.message).toContain('留空')
   })
 
   it('轉軸格式錯誤會警告', () => {

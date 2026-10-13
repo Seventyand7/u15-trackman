@@ -81,13 +81,13 @@ export default function RecordPage() {
   if (loadingSeasons) return <Spinner label="載入球季…" />
 
   if (!seasonId) {
-    return <Empty>還沒有球季。請先到「設定」建立一個球季、隊伍與比賽。</Empty>
+    return <Empty>尚未建立球季，請先至「設定」建立球季、隊伍與比賽。</Empty>
   }
 
   if (loadingData) return <Spinner label="載入本季資料…" />
 
   if (sortedGames.length === 0) {
-    return <Empty>這一季還沒有比賽。請先到「設定」新增比賽。</Empty>
+    return <Empty>本季尚無比賽，請先至「設定」新增。</Empty>
   }
 
   const teamA = teamById(game?.teamAId)
@@ -144,7 +144,7 @@ export default function RecordPage() {
       )}
 
       {!game || !teamA || !teamB ? (
-        <Empty>這場比賽的隊伍資料不完整，請到「設定」檢查。</Empty>
+        <Empty>本場比賽的隊伍資料不完整，請至「設定」檢查。</Empty>
       ) : (
         <>
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">

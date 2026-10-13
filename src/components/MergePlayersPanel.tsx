@@ -66,18 +66,18 @@ export function MergePlayersPanel({
   async function run() {
     if (!plan || running) return
     const message =
-      `確定要合併嗎？\n\n` +
+      `確認合併？\n\n` +
       `保留：${plan.result.number} ${plan.result.name}\n` +
       `刪除：${remove?.number} ${remove?.name}\n` +
-      `會把 ${plan.affected.total} 筆紀錄（投球 ${plan.affected.pitches}、擊球 ${plan.affected.battedBalls}）改到保留的球員身上。\n\n` +
-      `這個動作無法復原。`
+      `將把 ${plan.affected.total} 筆紀錄（投球 ${plan.affected.pitches}、擊球 ${plan.affected.battedBalls}）轉移至保留的球員。\n\n` +
+      `此動作無法復原。`
     if (!confirm(message)) return
 
     setRunning(true)
     setError(null)
     try {
       await applyMerge(plan)
-      onDone(`已合併：${plan.result.number} ${plan.result.name}（搬移 ${plan.affected.total} 筆紀錄）`)
+      onDone(`已合併：${plan.result.number} ${plan.result.name}（轉移 ${plan.affected.total} 筆紀錄）`)
     } catch (e) {
       setError(`合併失敗：${(e as Error).message}`)
       setRunning(false)
@@ -90,7 +90,7 @@ export function MergePlayersPanel({
         合併球員 · {teamById(teamId)?.name}
       </h3>
       <p className="mt-1 text-[13px] text-slate-400">
-        兩筆其實是同一個人時用這個。所有紀錄會搬到保留的那一筆身上，另一筆刪除。
+        兩筆為同一人時使用。所有紀錄將轉移至保留的球員，另一筆刪除。
       </p>
 
       <div className="mt-3 flex flex-wrap gap-3">
@@ -143,7 +143,7 @@ export function MergePlayersPanel({
           </span>
           ，並把{' '}
           <span className="font-semibold">{plan.affected.total}</span> 筆紀錄（投球{' '}
-          {plan.affected.pitches}、擊球 {plan.affected.battedBalls}）改到他身上。
+          {plan.affected.pitches}、擊球 {plan.affected.battedBalls}）轉移至該球員。
         </p>
       )}
 

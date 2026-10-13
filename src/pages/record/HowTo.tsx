@@ -17,11 +17,11 @@ function readOpen(): boolean {
 }
 
 const STEPS = [
-  '上面選日期，再選要記的那場比賽。',
-  '選隊伍，打背號。沒有這個背號就會就地長出姓名欄，打完直接新增。',
-  '看「超過就要記」那一行——畫面上的數字超過它才需要記下來。',
-  '打數值，按 Enter 送出。送出後隊伍與背號會留著，可以連續記同一位。',
-  '送出前下面會直接寫「要記」或「可以略過」，不用自己比對。',
+  '選擇日期與比賽場次。',
+  '選擇隊伍並輸入背號；若該背號尚無球員，欄位旁會出現姓名欄，填入即可新增。',
+  '參考「記錄門檻」一列：Trackman 的數值超過門檻才需要記錄。',
+  '輸入數值後按 Enter 送出。送出後保留隊伍與背號，可連續記錄同一位球員。',
+  '送出前下方會顯示本筆是否達到門檻，不需自行比對。',
 ]
 
 export function HowTo() {
@@ -45,8 +45,8 @@ export function HowTo() {
         className="flex w-full items-center gap-2 text-left text-[15px] font-semibold text-slate-200"
       >
         <span className={`text-amber1 transition-transform ${open ? 'rotate-90' : ''}`}>▸</span>
-        怎麼用
-        {!open && <span className="text-[13px] font-normal text-slate-500">（點開看流程）</span>}
+        操作說明
+        {!open && <span className="text-[13px] font-normal text-slate-500">（展開）</span>}
       </button>
 
       {open && (
@@ -56,11 +56,25 @@ export function HowTo() {
               <li key={step}>{step}</li>
             ))}
           </ol>
-          <p className="text-[13px] text-slate-400">
-            <Kbd>Alt</Kbd>+<Kbd>1</Kbd> 投球　<Kbd>Alt</Kbd>+<Kbd>2</Kbd> 擊球
-            <Kbd>Tab</Kbd> 換欄　<Kbd>Esc</Kbd> 清空
-            　·　時間碼與轉軸只打數字，冒號會自己長出來
-          </p>
+          {/*
+            每個項目各自一個 span 用 gap 隔開，不靠文字裡的空白——
+            JSX 會把換行處的空白吃掉，用空白字元排版會黏在一起。
+          */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-slate-400">
+            <span>
+              <Kbd>Alt</Kbd>+<Kbd>1</Kbd> 投球
+            </span>
+            <span>
+              <Kbd>Alt</Kbd>+<Kbd>2</Kbd> 擊球
+            </span>
+            <span>
+              <Kbd>Tab</Kbd> 換欄
+            </span>
+            <span>
+              <Kbd>Esc</Kbd> 清空
+            </span>
+            <span>時間碼與轉軸僅需輸入數字，冒號自動帶入</span>
+          </div>
         </div>
       )}
     </div>

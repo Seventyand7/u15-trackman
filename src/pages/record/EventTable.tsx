@@ -45,7 +45,7 @@ export function EventTable({ game }: { game: Game }) {
         right={<span className="text-[13px] text-slate-400">{gamePitches.length} 筆</span>}
       >
         {gamePitches.length === 0 ? (
-          <Empty>這場還沒有投球紀錄</Empty>
+          <Empty>本場尚無投球紀錄</Empty>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-[15px]">
@@ -76,7 +76,7 @@ export function EventTable({ game }: { game: Game }) {
         right={<span className="text-[13px] text-slate-400">{gameBatted.length} 筆</span>}
       >
         {gameBatted.length === 0 ? (
-          <Empty>這場還沒有擊球紀錄</Empty>
+          <Empty>本場尚無擊球紀錄</Empty>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-[15px]">

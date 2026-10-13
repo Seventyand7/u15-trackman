@@ -3,6 +3,7 @@ import {
   compactDate,
   compareGamesNewestFirst,
   formatAngle,
+  formatBreak,
   formatDistance,
   formatGameDate,
   formatGameTitle,
@@ -188,5 +189,29 @@ describe('gameDates', () => {
 
   it('沒有比賽時是空陣列', () => {
     expect(gameDates([])).toEqual([])
+  })
+})
+
+describe('formatBreak — 位移補上 cm', () => {
+  it('純數字補上 cm', () => {
+    expect(formatBreak('22')).toBe('22 cm')
+    expect(formatBreak('-12.5')).toBe('-12.5 cm')
+  })
+
+  it('帶方向的文字也補得上', () => {
+    expect(formatBreak('右 22')).toBe('右 22 cm')
+  })
+
+  it('已經寫了 cm 就不再補，避免變成 cm cm', () => {
+    expect(formatBreak('22 cm')).toBe('22 cm')
+    expect(formatBreak('22cm')).toBe('22cm')
+    expect(formatBreak('22 CM')).toBe('22 CM')
+    expect(formatBreak('22 cm ')).toBe('22 cm')
+  })
+
+  it('缺值顯示破折號', () => {
+    expect(formatBreak(null)).toBe('-')
+    expect(formatBreak('')).toBe('-')
+    expect(formatBreak('   ')).toBe('-')
   })
 })

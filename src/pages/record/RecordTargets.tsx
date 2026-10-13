@@ -1,14 +1,14 @@
 /**
  * 回答「這一球要不要記」的參考數值。
  *
- * 最上面一行是結論：超過這個數字就要記。它是「季前三門檻」與「本場最佳」取低的那個——
+ * 最上面一行是結論：數值超過它才需要記錄。它是「季前三門檻」與「本場最佳」取低的那個——
  * 超過其中任何一個就有意義，所以只要盯一個數字，不用自己在腦袋裡比兩次。
  *
  * 下面幾列是拆開來的細節，平常不用看，想知道為什麼是這個數字的時候才看：
- *   本場個人 / 本季個人   這位球員現在的水準。換上第二位投手時，
+ *   本場個人 / 本季個人   這位球員目前的水準。換上第二位投手時，
  *                        他的球沒破全場紀錄還是要記——季前三名是各隊各算的。
- *   季前三門檻           贏過這個，該隊的季前三名才會變動
- *   本場最佳             贏過這個，才會取代單場圖卡上那一筆
+ *   季前三門檻           超過這個，該隊的季前三名才會變動
+ *   本場最佳             超過這個，才會取代單場圖卡上那一筆
  *
  * 還沒選到球員也會顯示（打者還沒上來、背號還沒看清楚），這時候以「一位新球員」估算。
  */
@@ -69,12 +69,12 @@ export function RecordTargets({
         {
           label: '本場個人',
           values: categories.map((c) => ownGame[c]?.primary ?? null),
-          emptyText: '還沒有',
+          emptyText: '無紀錄',
         },
         {
           label: '本季個人',
           values: categories.map((c) => ownSeason[c]?.primary ?? null),
-          emptyText: '還沒有',
+          emptyText: '無紀錄',
         },
       )
     }
@@ -91,7 +91,7 @@ export function RecordTargets({
       {
         label: '本場最佳',
         values: categories.map((c) => gameTarget(pool, gameId, c)),
-        emptyText: '還沒有',
+        emptyText: '無紀錄',
       },
     )
     return rows
@@ -104,14 +104,14 @@ export function RecordTargets({
       {/* 結論：只要盯這一行 */}
       <div className="bg-amber1/10 px-3 py-2.5">
         <div className="grid items-center gap-x-3" style={{ gridTemplateColumns: gridCols }}>
-          <span className="text-[13px] font-semibold text-amber1">超過就要記</span>
+          <span className="text-[13px] font-semibold text-amber1">記錄門檻</span>
           {categories.map((c, i) => (
             <div key={c} className="text-center">
               <div className="text-[12px] text-slate-400">
                 {CATEGORY_META[c].label.replace('最快', '').replace('最遠', '')}
               </div>
               {headline[i] === null || headline[i] === undefined ? (
-                <div className="text-base font-bold text-emerald-300">都要記</div>
+                <div className="text-base font-bold text-emerald-300">全部記錄</div>
               ) : (
                 <div className="font-mono text-xl font-bold tabular-nums text-amber1">
                   {formatPrimary(c, headline[i]!)}
@@ -125,7 +125,7 @@ export function RecordTargets({
       {/* 細節 */}
       <div className="bg-night-900/60 px-3 py-2">
         <div className="mb-1 text-[12px] text-slate-500">
-          {playerId ? '這位球員的細節' : '還沒選球員，以新球員估算'}
+          {playerId ? '明細' : '尚未指定球員，以新球員估算'}
         </div>
         <div className="grid items-center gap-x-3 gap-y-1" style={{ gridTemplateColumns: gridCols }}>
           {details.map((row) => (

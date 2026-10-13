@@ -136,13 +136,13 @@ function checkRange(raw: string, rule: RangeRule, out: FieldWarning[]): void {
   if (t === '') return
   const n = Number(t)
   if (Number.isNaN(n)) {
-    out.push({ field: rule.field, message: `${rule.label}不是數字，送出後這欄會留白` })
+    out.push({ field: rule.field, message: `${rule.label}非數字，送出後此欄留空` })
     return
   }
   if (n < rule.min || n > rule.max) {
     out.push({
       field: rule.field,
-      message: `${rule.label} ${t} 超出常見範圍（${rule.min}–${rule.max}），確認一下沒看錯`,
+      message: `${rule.label} ${t} 超出常見範圍（${rule.min}–${rule.max}），請確認`,
     })
   }
 }
@@ -154,7 +154,7 @@ export function warnPitch(input: PitchInput): FieldWarning[] {
   }
   const axis = input.axis.trim()
   if (axis !== '' && !AXIS_PATTERN.test(axis)) {
-    out.push({ field: 'axis', message: '轉軸格式應為 H:MM，H 是 1–12（例如 1:30）' })
+    out.push({ field: 'axis', message: '轉軸格式應為 H:MM，H 為 1–12' })
   }
   return out
 }
